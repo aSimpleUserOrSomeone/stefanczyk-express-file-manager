@@ -1,60 +1,95 @@
+@import url("https://fonts.googleapis.com/css2?family=Rubik&display=swap");
+
 :root {
-    --alabaster: #E0E2DB;
-    --timberwolf: #D2D4C8;
-    --ash-grey: #B8BDB5;
-    --cadet-gray: #889696;
-    --hookers-gray: #5F7470
+  --alabaster: #e0e2db;
+  --timberwolf: #d2d4c8;
+  --ash-grey: #b8bdb5;
+  --cadet-gray: #889696;
+  --hookers-gray: #5f7470;
 }
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Rubik", sans-serif;
 }
 
 body {
-    width: 100%;
-    height: 100vh;
+  width: 100%;
+  height: 100vh;
 }
 
 header {
-    background: rgb(95, 116, 112);
-    background: linear-gradient(90deg, rgba(95, 116, 112, 1) 0%, rgba(95, 116, 112, 1) 40%, rgba(224, 226, 219, 1) 100%);
+  background: rgb(95, 116, 112);
+  background: linear-gradient(
+    90deg,
+    rgba(95, 116, 112, 1) 0%,
+    rgba(95, 116, 112, 1) 40%,
+    rgba(224, 226, 219, 1) 100%
+  );
 
-    color: var(--alabaster);
-    padding: 2rem;
+  color: var(--alabaster);
+  padding: 2rem;
 }
 
 main {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: stretch;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
 }
 
 aside {
-    background-color: var(--ash-grey);
+  background-color: var(--ash-grey);
 
-    display: flex;
-    flex-direction: column;
-    justify-content: stretch;
-    align-items: stretch;
-    padding: 0.5rem;
-    gap: 1rem;
-
+  display: flex;
+  flex-direction: column;
+  justify-content: stretch;
+  align-items: stretch;
+  padding: 0.5rem;
+  gap: 1rem;
 }
 
 .form-group {
-    display: flex;
-    justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
+}
+.form-group > * {
+  flex-basis: 30%;
 }
 
 button,
-input[type=file] {
-    padding: 0.2rem;
+input[type="file"] {
+  padding: 0.2rem;
 }
 
-
 .file-window {
-    flex-grow: 1;
+  flex-grow: 1;
+}
+
+dialog[open] {
+  padding: 1.25rem;
+  color: var(--hookers-gray);
+  max-width: 290px;
+
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+dialog > form {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+form > input[type="text"] {
+  padding: 0.25em;
 }

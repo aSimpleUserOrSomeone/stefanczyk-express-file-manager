@@ -9,12 +9,45 @@
 <div class="file-window">
 
 </div>
-<dialog id="myDialog"></dialog>
+<dialog id="myDialog">
+    <h2 id="submitHeading">Podaj nazwę</h2>
+    <form method="POST" id="submitForm">
+        <input type="text" name="entityName" id="inpName" required>
+        <div class="form-group">
+            <button type="submit" name="reqType" value="" id="btnSubmitDialog">Confirm</button>
+            <button type="button" id="btnCloseDialog">Cancel</button>
+        </div>
+    </form>
+</dialog>
 
 <script defer type="text/javascript">
     const btnFolder = document.querySelector("button#folder")
     const btnFile = document.querySelector("button#file")
     const btnUpload = document.querySelector("button#upload")
+
+    const dialog = document.querySelector("dialog")
+    const btnCloseDialog = document.querySelector("button#btnCloseDialog")
+    btnCloseDialog.addEventListener("click", () => {dialog.close()})
+
+    const btnSubmitDialog = document.querySelector("button#btnSubmitDialog")
+    const submitHeading = document.querySelector("h2#submitHeading") 
+    const submitForm = document.querySelector("form#submitForm")
+
+    btnFolder.addEventListener("click",() => showDialog("folder"))
+    btnFile.addEventListener("click",() => showDialog("file"))
+    dialog.addEventListener("close", () => submitForm.reset())
+
+    function showDialog(type) {
+        if(type === "folder") {
+            submitHeading.textContent = "Podaj nazwę folderu"
+            btnSubmitDialog.value = "folder"
+            
+        } else if(type === "file") {
+            submitHeading.textContent = "Podaj nazwę pliku wraz z rozszerzeniem"
+            btnSubmitDialog.value = "file"
+        }
+        dialog.showModal()
+    }
 
     //const myForm = document.querySelector("")
     //myForm.addEventListener("submit", validateForm)
