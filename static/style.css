@@ -1,0 +1,60 @@
+:root {
+    --alabaster: #E0E2DB;
+    --timberwolf: #D2D4C8;
+    --ash-grey: #B8BDB5;
+    --cadet-gray: #889696;
+    --hookers-gray: #5F7470
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 100%;
+    height: 100vh;
+}
+
+header {
+    background: rgb(95, 116, 112);
+    background: linear-gradient(90deg, rgba(95, 116, 112, 1) 0%, rgba(95, 116, 112, 1) 40%, rgba(224, 226, 219, 1) 100%);
+
+    color: var(--alabaster);
+    padding: 2rem;
+}
+
+main {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+}
+
+aside {
+    background-color: var(--ash-grey);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+    padding: 0.5rem;
+    gap: 1rem;
+
+}
+
+.form-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+button,
+input[type=file] {
+    padding: 0.2rem;
+}
+
+
+.file-window {
+    flex-grow: 1;
+}
