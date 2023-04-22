@@ -1,95 +1,152 @@
-@import url("https://fonts.googleapis.com/css2?family=Rubik&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap');
 
 :root {
-  --alabaster: #e0e2db;
-  --timberwolf: #d2d4c8;
-  --ash-grey: #b8bdb5;
-  --cadet-gray: #889696;
-  --hookers-gray: #5f7470;
+	--alabaster: #e0e2db;
+	--timberwolf: #d2d4c8;
+	--ash-grey: #b8bdb5;
+	--cadet-gray: #889696;
+	--hookers-gray: #5f7470;
 }
 
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Rubik", sans-serif;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: 'Rubik', sans-serif;
 }
 
 body {
-  width: 100%;
-  height: 100vh;
+	width: 100%;
+	height: 100vh;
 }
 
 header {
-  background: rgb(95, 116, 112);
-  background: linear-gradient(
-    90deg,
-    rgba(95, 116, 112, 1) 0%,
-    rgba(95, 116, 112, 1) 40%,
-    rgba(224, 226, 219, 1) 100%
-  );
+	background: rgb(95, 116, 112);
+	background: linear-gradient(90deg, rgba(95, 116, 112, 1) 0%, rgba(95, 116, 112, 1) 40%, rgba(224, 226, 219, 1) 100%);
 
-  color: var(--alabaster);
-  padding: 2rem;
+	color: var(--alabaster);
+	padding: 2rem;
 }
 
 main {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: stretch;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: stretch;
 }
 
 aside {
-  background-color: var(--ash-grey);
+	background-color: var(--ash-grey);
+	width: 300px;
 
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  align-items: stretch;
-  padding: 0.5rem;
-  gap: 1rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: stretch;
+	align-items: stretch;
+	padding: 0.5rem;
+	gap: 1rem;
 }
 
 .form-group {
-  display: flex;
-  justify-content: space-between;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
-.form-group > * {
-  flex-basis: 30%;
+.form-group > button {
+	flex-basis: 20%;
 }
 
 button,
-input[type="file"] {
-  padding: 0.2rem;
+input[type='file'] {
+	padding: 0.2rem;
 }
 
-.file-window {
-  flex-grow: 1;
+.content-window {
+	flex-grow: 1;
+	padding: 1rem;
+	gap: 1rem;
+
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	justify-content: flex-start;
+}
+
+.content-group {
+	display: flex;
+	flex-flow: row wrap;
+	gap: 1rem;
+}
+
+.tile {
+	border-radius: 0.25rem;
+	padding: 0.5em;
+
+	display: flex;
+	flex-flow: column nowrap;
+	gap: 0.5em;
+}
+
+.tile > form {
+	gap: 1em;
+}
+
+.tile img {
+	height: 50px;
+}
+
+.folder {
+	background-color: var(--cadet-gray);
+	color: var(--alabaster);
+}
+
+.file {
+	background-color: var(--timberwolf);
+}
+
+button.x {
+	border: none;
+	background-color: transparent;
+	font-weight: bold;
+	cursor: pointer;
+	transition: 0.25s;
+	font-size: 1.25rem;
+}
+
+button.x.light {
+	color: var(--timberwolf);
+}
+
+button.x.light:hover {
+	color: initial;
+}
+button.x:not(.light):hover {
+	color: var(--alabaster);
+	text-shadow: 0 0 3px black;
 }
 
 dialog[open] {
-  padding: 1.25rem;
-  color: var(--hookers-gray);
-  max-width: 290px;
+	padding: 1.25rem;
+	color: var(--hookers-gray);
+	max-width: 290px;
 
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: stretch;
-  gap: 1rem;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	gap: 1rem;
 }
 
 dialog > form {
-  display: flex;
-  flex-flow: column nowrap;
-  align-items: stretch;
-  gap: 1rem;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: stretch;
+	gap: 1rem;
 }
 
-form > input[type="text"] {
-  padding: 0.25em;
+form > input[type='text'] {
+	padding: 0.25em;
 }
