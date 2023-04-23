@@ -1,24 +1,47 @@
 <aside>
-    <button type="button" id="folder" type="submit">Nowy folder</button>
-    <button type="button" id="file" type="submit">Nowy plik tekstowy</button>
-    <form "form-group">
-        <input type="file" multiple>
-        <button id="upload" type="submit" formaction="/uploadFiles">Ok</button>
-    </form>
+	<button type='button' id='folder' type='submit'>Nowy folder</button>
+	<button type='button' id='file' type='submit'>Nowy plik</button>
+	<form class='form-group' action="/" method="POST" enctype="multipart/form-data">
+		<input type='file' multiple required name="entities"/>
+		<input type="hidden" name="reqType" value="upload">
+		<button id='upload' type='submit'>Ok</button>
+	</form>
 </aside>
-<div class="file-window">
-
+<div class='content-window'>
+	<div class='content-group'>
+		{{#each contents.folders}}
+			<div class='tile folder'>
+                <form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
+                    <input type="hidden" name="reqType" value="remove">
+                    <img src='folder.png' alt='folder image' />
+                    <button class="x light" type='submit' name="entityName" value="{{this}}">X</button>
+                </form>
+				<p class="file-name"><span class="file-name">{{this}}</span></p>
+			</div>
+		{{/each}}
+	</div>
+	<div class='content-group'>
+		{{#each contents.files}}
+			<div class='tile file'>
+                <form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
+                    <input type="hidden" name="reqType" value="remove">
+                    <img src='documents.png' alt='file image' />
+                    <button class="x" type='submit' name="entityName" value="{{this}}">X</button>
+                </form>
+				<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
+			</div>
+		{{/each}}
+	</div>
 </div>
-<dialog id="myDialog"></dialog>
+<dialog id='myDialog'>
+	<h2 id='submitHeading'>Podaj nazwę</h2>
+	<form method='POST' id='submitForm'>
+		<input type='text' name='entityName' id='inpName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$' required />
+		<div class='form-group'>
+			<button type='submit' name='reqType' value='' id='btnSubmitDialog'>Potwierdź</button>
+			<button type='button' id='btnCloseDialog'>Anuluj</button>
+		</div>
+	</form>
+</dialog>
 
-<script defer type="text/javascript">
-    const btnFolder = document.querySelector("button#folder")
-    const btnFile = document.querySelector("button#file")
-    const btnUpload = document.querySelector("button#upload")
-
-    //const myForm = document.querySelector("")
-    //myForm.addEventListener("submit", validateForm)
-    //function validateForm(e) {
-    //    confirm("Sure?") ? form.submit() : e.preventDefault()
-    //}
-</script>
+<script defer type='text/javascript' src="indexScript.js"></script>
