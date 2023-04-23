@@ -81,6 +81,7 @@ input[type='file'] {
 .tile {
 	border-radius: 0.25rem;
 	padding: 0.5em;
+	white-space: nowrap;
 
 	display: flex;
 	flex-flow: column nowrap;
@@ -95,6 +96,12 @@ input[type='file'] {
 	height: 50px;
 }
 
+.tile > p {
+	display: flex;
+	align-items: start;
+	justify-content: flex-start;
+}
+
 .folder {
 	background-color: var(--cadet-gray);
 	color: var(--alabaster);
@@ -102,6 +109,12 @@ input[type='file'] {
 
 .file {
 	background-color: var(--timberwolf);
+}
+
+.file-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 160px;
 }
 
 button.x {

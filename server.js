@@ -24,7 +24,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/", (req, res) => {
-  console.log(req.body);
   if (req.body.reqType === "folder") {
     var newPath = path.join(uploadsPath, req.body.entityName);
     var i = 0;
@@ -37,6 +36,7 @@ app.post("/", (req, res) => {
       }
     }
     fs.mkdirSync(newPath);
+    return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
   } else if (req.body.reqType === "file") {
     var fileName = req.body.entityName
     var fileExt = undefined
@@ -46,28 +46,34 @@ app.post("/", (req, res) => {
     if (fileName.lastIndexOf(".") != -1) {
       fileExt = fileName.substring(fileName.lastIndexOf(".") + 1)
       fileName = fileName.substring(0, fileName.lastIndexOf("."))
+    } else {
+      fileExt = "txt"
     }
 
-    var newPath = path.join(uploadsPath, fileName);
+    var newPath = path.join(uploadsPath, fileName + "." + fileExt);
     var i = 0;
+
     while (fs.existsSync(newPath)) {
+      console.log(newPath);
       i += 1;
-      if (newPath.at(-3) == "(" && newPath.at(-1) == ")") {
-        newPath = newPath.substring(0, newPath.length - 3) + `(${i})`;
+      if (fileName.at(-3) == "(" && fileName.at(-1) == ")") {
+        newPath = path.join(uploadsPath, fileName.substring(0, fileName.length - 3)
+          + `(${i})`
+          + "." + fileExt);
       } else {
-        newPath += `(${i})`;
+        newPath = path.join(uploadsPath, fileName
+          + `(${i})`
+          + "." + fileExt);
       }
     }
 
-    if (fileExt) { newPath += "." + fileExt }
-    else { newPath += ".txt" }
-
     fs.writeFileSync(newPath, "")
+    return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+
   } else if (req.body.reqType === "remove") {
 
     const fileName = req.body.entityName
     const newPath = path.join(uploadsPath, fileName)
-    console.log(newPath);
 
     if (fs.existsSync(newPath)) {
       if (fs.lstatSync(newPath).isDirectory()) {
@@ -76,21 +82,64 @@ app.post("/", (req, res) => {
         fs.unlinkSync(newPath)
       }
     }
-  } else if (req.body.reqType === "upload") {
+
+    return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+
+  } else {
     let form = formidable({
       multiples: true,
       keepExtensions: true,
       uploadDir: uploadsPath
     })
+
     form.parse(req, (err, fields, files) => {
-      console.log("----- przesłane pola z formularza ------");
-      console.log(fields);
-      console.log("----- przesłane formularzem pliki ------");
-      console.log(files);
+      if (files.entities.length > 1) {
+        files.entities.forEach(file => {
+          var newPath = path.join(uploadsPath, file.originalFilename)
+          var fileName = file.originalFilename.substring(0, file.originalFilename.lastIndexOf("."))
+          var fileExt = fileName.substring(fileName.lastIndexOf(".") + 1)
+          var i = 0
+
+          while (fs.existsSync(newPath)) {
+            i += 1;
+            if (fileName.at(-3) == "(" && fileName.at(-1) == ")") {
+              newPath = path.join(uploadsPath, fileName.substring(0, fileName.length - 3)
+                + `(${i})`
+                + "." + fileExt);
+            } else {
+              newPath = path.join(uploadsPath, fileName
+                + `(${i})`
+                + "." + fileExt);
+            }
+          }
+
+          fs.renameSync(file.filepath, newPath)
+        })
+      } else {
+        var newPath = path.join(uploadsPath, files.entities.originalFilename)
+        var fileName = files.entities.originalFilename.substring(0, files.entities.originalFilename.lastIndexOf("."))
+        var fileExt = fileName.substring(fileName.lastIndexOf(".") + 1)
+        var i = 0
+
+        while (fs.existsSync(newPath)) {
+          i += 1;
+          if (fileName.at(-3) == "(" && fileName.at(-1) == ")") {
+            newPath = path.join(uploadsPath, fileName.substring(0, fileName.length - 3)
+              + `(${i})`
+              + "." + fileExt);
+          } else {
+            newPath = path.join(uploadsPath, fileName
+              + `(${i})`
+              + "." + fileExt);
+          }
+        }
+
+        fs.renameSync(files.entities.filepath, newPath)
+      }
+
+      return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
     })
   }
-
-  res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
 });
 
 
@@ -100,12 +149,15 @@ function readDirectoryContents(path) {
     if (e.isDirectory()) {
       contents.folders.push(e.name)
     } else {
-      contents.files.push(e.name)
+      contents.files.push({
+        name: e.name.substring(0, e.name.lastIndexOf(".")),
+        ext: e.name.substring(e.name.lastIndexOf("."))
+      })
     }
   })
   return contents
 }
 
 app.listen(port, () => {
-  console.log(`Server listening on port: ${port}`);
+  console.log(`Server listening on localhost:${port}`);
 });

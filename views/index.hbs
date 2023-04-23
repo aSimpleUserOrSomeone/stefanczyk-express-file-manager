@@ -1,33 +1,34 @@
 <aside>
 	<button type='button' id='folder' type='submit'>Nowy folder</button>
 	<button type='button' id='file' type='submit'>Nowy plik</button>
-	<form class='form-group' action="/" method="POST" >
+	<form class='form-group' action="/" method="POST" enctype="multipart/form-data">
 		<input type='file' multiple required name="entities"/>
-		<button id='upload' type='submit' name="reqType" value="upload">Ok</button>
+		<input type="hidden" name="reqType" value="upload">
+		<button id='upload' type='submit'>Ok</button>
 	</form>
 </aside>
 <div class='content-window'>
 	<div class='content-group'>
 		{{#each contents.folders}}
 			<div class='tile folder'>
-                <form class="form-group" action="/" method="POST">
+                <form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
                     <input type="hidden" name="reqType" value="remove">
                     <img src='folder.png' alt='folder image' />
                     <button class="x light" type='submit' name="entityName" value="{{this}}">X</button>
                 </form>
-				<p>{{this}}</p>
+				<p class="file-name"><span class="file-name">{{this}}</span></p>
 			</div>
 		{{/each}}
 	</div>
 	<div class='content-group'>
 		{{#each contents.files}}
 			<div class='tile file'>
-                <form class="form-group" action="/" method="POST">
+                <form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
                     <input type="hidden" name="reqType" value="remove">
                     <img src='documents.png' alt='file image' />
                     <button class="x" type='submit' name="entityName" value="{{this}}">X</button>
                 </form>
-				<p>{{this}}</p>
+				<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
 			</div>
 		{{/each}}
 	</div>
@@ -43,29 +44,4 @@
 	</form>
 </dialog>
 
-<script defer type='text/javascript'>
-	const btnFolder = document.querySelector("button#folder")
-    const btnFile = document.querySelector("button#file")
-    const btnUpload = document.querySelector("button#upload")
-    const dialog = document.querySelector("dialog")
-    const btnCloseDialog = document.querySelector("button#btnCloseDialog")
-    
-    btnCloseDialog.addEventListener("click", () => {dialog.close()})
-    const btnSubmitDialog = document.querySelector("button#btnSubmitDialog")
-    const submitHeading = document.querySelector("h2#submitHeading")
-    const submitForm = document.querySelector("form#submitForm")
-    
-    btnFolder.addEventListener("click", () => showDialog("folder"))
-	btnFile.addEventListener("click", () => showDialog("file"))
-    dialog.addEventListener("close", () => submitForm.reset())
-    function showDialog(type) {
-        if(type === "folder") {
-            submitHeading.textContent = "Podaj nazwę folderu"
-            btnSubmitDialog.value = "folder"
-        } else if(type === "file") {
-            submitHeading.textContent = "Podaj nazwę pliku wraz z rozszerzeniem"
-            btnSubmitDialog.value = "file"
-        }
-	    dialog.showModal()
-    }
-</script>
+<script defer type='text/javascript' src="indexScript.js"></script>
