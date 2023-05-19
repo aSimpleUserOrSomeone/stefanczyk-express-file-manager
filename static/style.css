@@ -52,7 +52,8 @@ aside {
 	align-items: center;
 	justify-content: space-between;
 }
-.form-group > button {
+
+.form-group>button {
 	flex-basis: 20%;
 }
 
@@ -72,6 +73,40 @@ input[type='file'] {
 	justify-content: flex-start;
 }
 
+.route-name {
+	display: flex;
+	align-items: center;
+	gap: 1.5em;
+}
+
+.route-list {
+	display: flex;
+	gap: 1em;
+	list-style: none;
+}
+
+.route-list li {
+	width: auto;
+	display: flex;
+	flex-wrap: nowrap;
+}
+
+.route-list li form {
+	width: min-content;
+}
+
+.route-list li::before {
+	display: inline-block;
+	color: red;
+	content: "";
+	background-image: url("./arrow-forward.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+	height: 100%;
+	width: 30px;
+}
+
+
 .content-group {
 	display: flex;
 	flex-flow: row wrap;
@@ -88,7 +123,7 @@ input[type='file'] {
 	gap: 0.5em;
 }
 
-.tile > form {
+.tile>form {
 	gap: 1em;
 }
 
@@ -96,7 +131,7 @@ input[type='file'] {
 	height: 50px;
 }
 
-.tile > p {
+.tile>p {
 	display: flex;
 	align-items: start;
 	justify-content: flex-start;
@@ -133,6 +168,7 @@ button.x.light {
 button.x.light:hover {
 	color: initial;
 }
+
 button.x:not(.light):hover {
 	color: var(--alabaster);
 	text-shadow: 0 0 3px black;
@@ -153,13 +189,13 @@ dialog[open] {
 	gap: 1rem;
 }
 
-dialog > form {
+dialog>form {
 	display: flex;
 	flex-flow: column nowrap;
 	align-items: stretch;
 	gap: 1rem;
 }
 
-form > input[type='text'] {
+form>input[type='text'] {
 	padding: 0.25em;
 }

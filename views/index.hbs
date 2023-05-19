@@ -2,41 +2,61 @@
 	<button type='button' id='folder' type='submit'>Nowy folder</button>
 	<button type='button' id='file' type='submit'>Nowy plik</button>
 	<form class='form-group' action="/" method="POST" enctype="multipart/form-data">
-		<input type='file' multiple required name="entities"/>
+		<input type='file' multiple required name="entities" />
 		<input type="hidden" name="reqType" value="upload">
 		<button id='upload' type='submit'>Ok</button>
 	</form>
 </aside>
 <div class='content-window'>
+	<div class="route-name">
+		<form action="/" method="GET">
+			<input type="hidden" name="newRoute" value="/">
+			<button class="route-redirector">Home</button>
+		</form>
+		<ul class="route-list">
+			{{#each currentRoute}}
+			<li>
+				<form action="/" method="GET">
+					<input type="hidden" name="newRoute" value="{{this.absoluteRoute}}">
+					<button class="route-redirector">{{this.name}}</button>
+				</form>
+			</li>
+			{{/each}}
+		</ul>
+	</div>
 	<div class='content-group'>
 		{{#each contents.folders}}
-			<div class='tile folder'>
-                <form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
-                    <input type="hidden" name="reqType" value="remove">
-                    <img src='folder.png' alt='folder image' />
-                    <button class="x light" type='submit' name="entityName" value="{{this}}">X</button>
-                </form>
-				<p class="file-name"><span class="file-name">{{this}}</span></p>
-			</div>
+		<div class='tile folder'>
+			<form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
+				<input type="hidden" name="reqType" value="remove">
+				<img src='folder.png' alt='folder image' />
+				<button class="x light" type='submit' name="entityName" value="{{this}}">X</button>
+			</form>
+			<form class="file-name" method="GET" action="/">
+				<input type="hidden" name="newRoute" value="{{#each currentRoute}}{{this.name}}/{{/each}}{{this.name}}">
+				<button class="file-name">{{this}}</button>
+			</form>
+		</div>
 		{{/each}}
 	</div>
 	<div class='content-group'>
 		{{#each contents.files}}
-			<div class='tile file'>
-                <form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
-                    <input type="hidden" name="reqType" value="remove">
-                    <img src='documents.png' alt='file image' />
-                    <button class="x" type='submit' name="entityName" value="{{this}}">X</button>
-                </form>
-				<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
-			</div>
+		<div class='tile file'>
+			<form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
+				<input type="hidden" name="reqType" value="remove">
+				<img src='documents.png' alt='file image' />
+				<button class="x" type='submit' name="entityName" value="{{this.name}}{{this.ext}}">X</button>
+			</form>
+			<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
+		</div>
 		{{/each}}
 	</div>
 </div>
 <dialog id='myDialog'>
 	<h2 id='submitHeading'>Podaj nazwę</h2>
 	<form method='POST' id='submitForm'>
-		<input type='text' name='entityName' id='inpName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$' required />
+		<input type='text' name='entityName' id='inpName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$'
+			required />
 		<div class='form-group'>
 			<button type='submit' name='reqType' value='' id='btnSubmitDialog'>Potwierdź</button>
 			<button type='button' id='btnCloseDialog'>Anuluj</button>

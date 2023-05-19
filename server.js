@@ -18,14 +18,19 @@ const uploadsPath = path.join(__dirname, "uploads");
 if (!fs.existsSync(path.join(uploadsPath))) {
   fs.mkdirSync(uploadsPath);
 }
+let activeUploadsPath = uploadsPath
 
 app.get("/", (req, res) => {
-  res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+  const newRoute = req.query.newRoute || ""
+  const currentPath = handleRoute(newRoute)
+  console.log(currentPath);
+  res.render("index.hbs", { contents: readDirectoryContents(activeUploadsPath), currentRoute: currentPath });
 });
 
 app.post("/", (req, res) => {
+  // console.log(req.body);
   if (req.body.reqType === "folder") {
-    var newPath = path.join(uploadsPath, req.body.entityName);
+    var newPath = path.join(activeUploadsPath, req.body.entityName);
     var i = 0;
     while (fs.existsSync(newPath)) {
       i += 1;
@@ -36,7 +41,7 @@ app.post("/", (req, res) => {
       }
     }
     fs.mkdirSync(newPath);
-    return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+    return res.render("index.hbs", { contents: readDirectoryContents(activeUploadsPath) });
   } else if (req.body.reqType === "file") {
     var fileName = req.body.entityName
     var fileExt = undefined
@@ -50,30 +55,32 @@ app.post("/", (req, res) => {
       fileExt = "txt"
     }
 
-    var newPath = path.join(uploadsPath, fileName + "." + fileExt);
+    var newPath = path.join(activeUploadsPath, fileName + "." + fileExt);
     var i = 0;
 
     while (fs.existsSync(newPath)) {
       console.log(newPath);
       i += 1;
       if (fileName.at(-3) == "(" && fileName.at(-1) == ")") {
-        newPath = path.join(uploadsPath, fileName.substring(0, fileName.length - 3)
+        newPath = path.join(activeUploadsPath, fileName.substring(0, fileName.length - 3)
           + `(${i})`
           + "." + fileExt);
       } else {
-        newPath = path.join(uploadsPath, fileName
+        newPath = path.join(activeUploadsPath, fileName
           + `(${i})`
           + "." + fileExt);
       }
     }
 
     fs.writeFileSync(newPath, "")
-    return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+    return res.render("index.hbs", { contents: readDirectoryContents(activeUploadsPath) });
 
   } else if (req.body.reqType === "remove") {
 
+    console.log(req.body.entityName);
+
     const fileName = req.body.entityName
-    const newPath = path.join(uploadsPath, fileName)
+    const newPath = path.join(activeUploadsPath, fileName)
 
     if (fs.existsSync(newPath)) {
       if (fs.lstatSync(newPath).isDirectory()) {
@@ -83,19 +90,19 @@ app.post("/", (req, res) => {
       }
     }
 
-    return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+    return res.render("index.hbs", { contents: readDirectoryContents(activeUploadsPath) });
 
   } else {
     let form = formidable({
       multiples: true,
       keepExtensions: true,
-      uploadDir: uploadsPath
+      uploadDir: activeUploadsPath
     })
 
     form.parse(req, (err, fields, files) => {
       if (files.entities.length > 1) {
         files.entities.forEach(file => {
-          var newPath = path.join(uploadsPath, file.originalFilename)
+          var newPath = path.join(activeUploadsPath, file.originalFilename)
           var fileName = file.originalFilename.substring(0, file.originalFilename.lastIndexOf("."))
           var fileExt = fileName.substring(fileName.lastIndexOf(".") + 1)
           var i = 0
@@ -103,11 +110,11 @@ app.post("/", (req, res) => {
           while (fs.existsSync(newPath)) {
             i += 1;
             if (fileName.at(-3) == "(" && fileName.at(-1) == ")") {
-              newPath = path.join(uploadsPath, fileName.substring(0, fileName.length - 3)
+              newPath = path.join(activeUploadsPath, fileName.substring(0, fileName.length - 3)
                 + `(${i})`
                 + "." + fileExt);
             } else {
-              newPath = path.join(uploadsPath, fileName
+              newPath = path.join(activeUploadsPath, fileName
                 + `(${i})`
                 + "." + fileExt);
             }
@@ -116,7 +123,7 @@ app.post("/", (req, res) => {
           fs.renameSync(file.filepath, newPath)
         })
       } else {
-        var newPath = path.join(uploadsPath, files.entities.originalFilename)
+        var newPath = path.join(activeUploadsPath, files.entities.originalFilename)
         var fileName = files.entities.originalFilename.substring(0, files.entities.originalFilename.lastIndexOf("."))
         var fileExt = fileName.substring(fileName.lastIndexOf(".") + 1)
         var i = 0
@@ -124,11 +131,11 @@ app.post("/", (req, res) => {
         while (fs.existsSync(newPath)) {
           i += 1;
           if (fileName.at(-3) == "(" && fileName.at(-1) == ")") {
-            newPath = path.join(uploadsPath, fileName.substring(0, fileName.length - 3)
+            newPath = path.join(activeUploadsPath, fileName.substring(0, fileName.length - 3)
               + `(${i})`
               + "." + fileExt);
           } else {
-            newPath = path.join(uploadsPath, fileName
+            newPath = path.join(activeUploadsPath, fileName
               + `(${i})`
               + "." + fileExt);
           }
@@ -137,11 +144,39 @@ app.post("/", (req, res) => {
         fs.renameSync(files.entities.filepath, newPath)
       }
 
-      return res.render("index.hbs", { contents: readDirectoryContents(uploadsPath) });
+      return res.render("index.hbs", { contents: readDirectoryContents(activeUploadsPath) });
     })
   }
 });
 
+let currentPath = []
+//New route parameter is the relative path from upload/ folder
+//Not just the new folder name but the whole
+function handleRoute(newRoute) {
+  if (newRoute == "/") {
+    activeUploadsPath = uploadsPath
+    sustainedPath = ""
+    currentPath = []
+    console.log("Route is home!");
+  } else if (path.join(uploadsPath, newRoute) == activeUploadsPath) {
+    console.log("Route stayed the same:");
+    console.log(newRoute);
+  } else {
+    console.log("Route changed to:");
+    console.log(newRoute);
+    activeUploadsPath = path.join(uploadsPath, newRoute)
+    //
+    const newRouteName = newRoute.lastIndexOf("/") == -1 ? newRoute : newRoute.slice(newRoute.lastIndexOf("/"))
+    currentPath.push({ name: newRouteName, absoluteRoute: newRoute })
+  }
+
+  return currentPath
+
+  // return currentPath = [
+  //   {name: "thisname", absolutePath: "absolutePathToThisDir"},
+  //   ...
+  // ]
+}
 
 function readDirectoryContents(path) {
   const contents = { files: [], folders: [] }
@@ -149,6 +184,7 @@ function readDirectoryContents(path) {
     if (e.isDirectory()) {
       contents.folders.push(e.name)
     } else {
+      //is file
       contents.files.push({
         name: e.name.substring(0, e.name.lastIndexOf(".")),
         ext: e.name.substring(e.name.lastIndexOf("."))
