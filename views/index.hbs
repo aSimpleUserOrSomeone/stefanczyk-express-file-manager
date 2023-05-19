@@ -37,6 +37,8 @@
 				<button class="file-name">{{folder}}</button>
 			</form>
 		</div>
+		{{else}}
+		<p>No folders here...</p>
 		{{/each}}
 
 
@@ -51,6 +53,8 @@
 			</form>
 			<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
 		</div>
+		{{else}}
+			<p>No files here...</p>
 		{{/each}}
 	</div>
 </div>

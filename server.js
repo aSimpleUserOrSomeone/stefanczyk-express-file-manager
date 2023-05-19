@@ -22,14 +22,12 @@ let activeUploadsPath = uploadsPath;
 
 app.get('/', (req, res) => {
   const newRoute = req.query.newRoute || '';
-  const currentPath = handleRoute(newRoute);
-  let currentPathS = currentPath.map((el) => el.name).join('/');
-  if (currentPathS.length) currentPathS += '/';
+  const routesArray = handleRoute(newRoute);
 
   res.render('index.hbs', {
     contents: readDirectoryContents(activeUploadsPath),
-    currentRoute: currentPath,
-    currentRouteS: currentPathS,
+    routesArray: routesArray,
+    currentRoute: '',
   });
 });
 
@@ -182,41 +180,15 @@ app.post('/', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  console.log('error!');
   res.render('404.hbs', { url: req.url });
 });
 
-let currentPath = [];
-//New route parameter is the relative path from upload/ folder
-//Not just the new folder name but the whole
+//New route parameter is the relative path from uploads/ folder
+//Not just the new folder name but the whole thing
 function handleRoute(newRoute) {
-  if (newRoute == '/') {
-    activeUploadsPath = uploadsPath;
-    sustainedPath = '';
-    currentPath = [];
-    console.log('Route is home!');
-  } else if (path.join(uploadsPath, newRoute) == activeUploadsPath) {
-    console.log('Route stayed the same:');
-    console.log(newRoute);
-  } else if (
-    path.join(uploadsPath, newRoute).length < activeUploadsPath.length
-  ) {
-    console.log('Route reversed to:');
-    console.log(newRoute);
-    activeUploadsPath = path.join(uploadsPath, newRoute);
-  } else {
-    console.log('Route changed to:');
-    console.log(newRoute);
-    activeUploadsPath = path.join(uploadsPath, newRoute);
-    //
-    const newRouteName =
-      newRoute.lastIndexOf('/') == -1
-        ? newRoute
-        : newRoute.slice(newRoute.lastIndexOf('/') + 1);
-    currentPath.push({ name: newRouteName, absoluteRoute: newRoute });
-  }
-
-  return currentPath;
+  activeUploadsPath = path.join(uploadsPath, newRoute);
+  const routesArray = newRoute.slice(0, -1).split('/');
+  return routesArray;
 }
 
 function readDirectoryContents(path) {
