@@ -25,19 +25,21 @@
 		</ul>
 	</div>
 	<div class='content-group'>
-		{{#each contents.folders}}
+		{{#each contents.folders as | folder |}}
 		<div class='tile folder'>
 			<form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
 				<input type="hidden" name="reqType" value="remove">
 				<img src='folder.png' alt='folder image' />
-				<button class="x light" type='submit' name="entityName" value="{{this}}">X</button>
+				<button class="x light" type='submit' name="entityName" value="{{folder}}">X</button>
 			</form>
 			<form class="file-name" method="GET" action="/">
-				<input type="hidden" name="newRoute" value="{{#each currentRoute}}{{this.name}}/{{/each}}{{this.name}}">
-				<button class="file-name">{{this}}</button>
+				<input type="hidden" name="newRoute" value="{{../currentRouteS}}{{folder}}">
+				<button class="file-name">{{folder}}</button>
 			</form>
 		</div>
 		{{/each}}
+
+
 	</div>
 	<div class='content-group'>
 		{{#each contents.files}}
