@@ -198,6 +198,12 @@ function handleRoute(newRoute) {
   } else if (path.join(uploadsPath, newRoute) == activeUploadsPath) {
     console.log('Route stayed the same:');
     console.log(newRoute);
+  } else if (
+    path.join(uploadsPath, newRoute).length < activeUploadsPath.length
+  ) {
+    console.log('Route reversed to:');
+    console.log(newRoute);
+    activeUploadsPath = path.join(uploadsPath, newRoute);
   } else {
     console.log('Route changed to:');
     console.log(newRoute);
@@ -211,11 +217,6 @@ function handleRoute(newRoute) {
   }
 
   return currentPath;
-
-  // return currentPath = [
-  //   {name: "thisname", absolutePath: "absolutePathToThisDir"},
-  //   ...
-  // ]
 }
 
 function readDirectoryContents(path) {
