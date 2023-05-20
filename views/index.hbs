@@ -14,10 +14,10 @@
 			<button class="route-redirector">Home</button>
 		</form>
 		<ul class="route-list">
-			{{#each currentRoute}}
+			{{#each routesArray}}
 			<li>
 				<form action="/" method="GET">
-					<input type="hidden" name="newRoute" value="{{this.absoluteRoute}}">
+					<input type="hidden" name="newRoute" value="{{this.path}}">
 					<button class="route-redirector">{{this.name}}</button>
 				</form>
 			</li>
@@ -28,27 +28,27 @@
 		{{#each contents.folders as | folder |}}
 		<div class='tile folder'>
 			<form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
-				<input type="hidden" name="reqType" value="remove">
 				<img src='folder.png' alt='folder image' />
+				<input type="hidden" name="reqType" value="remove">
+				<input type="hidden" name="newRoute" value="{{../currentRoute}}">
 				<button class="x light" type='submit' name="entityName" value="{{folder}}">X</button>
 			</form>
 			<form class="file-name" method="GET" action="/">
-				<input type="hidden" name="newRoute" value="{{../currentRouteS}}{{folder}}">
+				<input type="hidden" name="newRoute" value="{{../currentRoute}}{{folder}}/">
 				<button class="file-name">{{folder}}</button>
 			</form>
 		</div>
 		{{else}}
 		<p>No folders here...</p>
 		{{/each}}
-
-
 	</div>
 	<div class='content-group'>
 		{{#each contents.files}}
 		<div class='tile file'>
 			<form class="form-group" action="/" method="POST" onsubmit="return confirmForm(this)">
-				<input type="hidden" name="reqType" value="remove">
 				<img src='documents.png' alt='file image' />
+				<input type="hidden" name="reqType" value="remove">
+				<input type="hidden" name="newRoute" value="{{../currentRoute}}">
 				<button class="x" type='submit' name="entityName" value="{{this.name}}{{this.ext}}">X</button>
 			</form>
 			<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
@@ -61,6 +61,7 @@
 <dialog id='myDialog'>
 	<h2 id='submitHeading'>Podaj nazwę</h2>
 	<form method='POST' id='submitForm'>
+		<input type="hidden" name="newRoute" value="{{currentRoute}}">
 		<input type='text' name='entityName' id='inpName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$'
 			required />
 		<div class='form-group'>

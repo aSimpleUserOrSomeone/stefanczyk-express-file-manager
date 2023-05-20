@@ -2,7 +2,9 @@ const express = require('express');
 const hbs = require('express-handlebars');
 const path = require('path');
 const fs = require('fs');
+const fse = require('fs-extra')
 const formidable = require('formidable');
+const { URLSearchParams } = require('url');
 
 const app = express();
 const port = 5500;
@@ -15,26 +17,35 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('static'));
 
 const uploadsPath = path.join(__dirname, 'uploads');
-if (!fs.existsSync(path.join(uploadsPath))) {
+if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
-let activeUploadsPath = uploadsPath;
 
 app.get('/', (req, res) => {
-  const newRoute = req.query.newRoute || '';
+  const newRoute = req.query.newRoute || '/';
   const routesArray = handleRoute(newRoute);
+  const activeUploadsPath = path.join(uploadsPath, newRoute);
+  const dirContents = readDirectoryContents(activeUploadsPath)
+
+  /*
+  Render options are:
+    contents - folders and files data,
+    routesArray - informations about the current path,
+    currentRoute - string with the current route in uploads folder
+  */
 
   res.render('index.hbs', {
-    contents: readDirectoryContents(activeUploadsPath),
+    contents: dirContents,
     routesArray: routesArray,
-    currentRoute: '',
+    currentRoute: newRoute,
   });
 });
 
 app.post('/', (req, res) => {
-  // console.log(req.body);
+  const currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload
+
   if (req.body.reqType === 'folder') {
-    var newPath = path.join(activeUploadsPath, req.body.entityName);
+    var newPath = path.join(uploadsPath, currentRoute, req.body.entityName);
     var i = 0;
     while (fs.existsSync(newPath)) {
       i += 1;
@@ -45,13 +56,12 @@ app.post('/', (req, res) => {
       }
     }
     fs.mkdirSync(newPath);
-    return res.render('index.hbs', {
-      contents: readDirectoryContents(activeUploadsPath),
-    });
+    // return res.render('index.hbs', {
+    //   contents: readDirectoryContents(uploadsPath),
+    // });
   } else if (req.body.reqType === 'file') {
     var fileName = req.body.entityName;
     var fileExt = undefined;
-    var newPath = path.join(__dirname, req.body.entityName);
 
     //check if file extension provided
     if (fileName.lastIndexOf('.') != -1) {
@@ -61,57 +71,54 @@ app.post('/', (req, res) => {
       fileExt = 'txt';
     }
 
-    var newPath = path.join(activeUploadsPath, fileName + '.' + fileExt);
+    var newPath = path.join(uploadsPath, currentRoute, fileName + '.' + fileExt);
     var i = 0;
 
     while (fs.existsSync(newPath)) {
-      console.log(newPath);
       i += 1;
       if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
         newPath = path.join(
-          activeUploadsPath,
+          uploadsPath, currentRoute,
           fileName.substring(0, fileName.length - 3) + `(${i})` + '.' + fileExt
         );
       } else {
         newPath = path.join(
-          activeUploadsPath,
+          uploadsPath, currentRoute,
           fileName + `(${i})` + '.' + fileExt
         );
       }
     }
 
     fs.writeFileSync(newPath, '');
-    return res.render('index.hbs', {
-      contents: readDirectoryContents(activeUploadsPath),
-    });
+    // return res.render('index.hbs', {
+    //   contents: readDirectoryContents(uploadsPath),
+    // });
   } else if (req.body.reqType === 'remove') {
-    console.log(req.body.entityName);
-
     const fileName = req.body.entityName;
-    const newPath = path.join(activeUploadsPath, fileName);
+    const newPath = path.join(uploadsPath, currentRoute, fileName);
 
     if (fs.existsSync(newPath)) {
       if (fs.lstatSync(newPath).isDirectory()) {
-        fs.rmdirSync(newPath);
+        fse.removeSync(newPath);
       } else {
         fs.unlinkSync(newPath);
       }
     }
 
-    return res.render('index.hbs', {
-      contents: readDirectoryContents(activeUploadsPath),
-    });
+    // return res.render('index.hbs', {
+    //   contents: readDirectoryContents(uploadsPath),
+    // });
   } else {
     let form = formidable({
       multiples: true,
       keepExtensions: true,
-      uploadDir: activeUploadsPath,
+      uploadDir: uploadsPath,
     });
 
     form.parse(req, (err, fields, files) => {
       if (files.entities.length > 1) {
         files.entities.forEach((file) => {
-          var newPath = path.join(activeUploadsPath, file.originalFilename);
+          var newPath = path.join(uploadsPath, currentRoute, file.originalFilename);
           var fileName = file.originalFilename.substring(
             0,
             file.originalFilename.lastIndexOf('.')
@@ -123,15 +130,15 @@ app.post('/', (req, res) => {
             i += 1;
             if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
               newPath = path.join(
-                activeUploadsPath,
+                uploadsPath, currentRoute,
                 fileName.substring(0, fileName.length - 3) +
-                  `(${i})` +
-                  '.' +
-                  fileExt
+                `(${i})` +
+                '.' +
+                fileExt
               );
             } else {
               newPath = path.join(
-                activeUploadsPath,
+                uploadsPath, currentRoute,
                 fileName + `(${i})` + '.' + fileExt
               );
             }
@@ -141,7 +148,7 @@ app.post('/', (req, res) => {
         });
       } else {
         var newPath = path.join(
-          activeUploadsPath,
+          uploadsPath, currentRoute,
           files.entities.originalFilename
         );
         var fileName = files.entities.originalFilename.substring(
@@ -155,15 +162,15 @@ app.post('/', (req, res) => {
           i += 1;
           if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
             newPath = path.join(
-              activeUploadsPath,
+              uploadsPath, currentRoute,
               fileName.substring(0, fileName.length - 3) +
-                `(${i})` +
-                '.' +
-                fileExt
+              `(${i})` +
+              '.' +
+              fileExt
             );
           } else {
             newPath = path.join(
-              activeUploadsPath,
+              uploadsPath, currentRoute,
               fileName + `(${i})` + '.' + fileExt
             );
           }
@@ -172,11 +179,18 @@ app.post('/', (req, res) => {
         fs.renameSync(files.entities.filepath, newPath);
       }
 
-      return res.render('index.hbs', {
-        contents: readDirectoryContents(activeUploadsPath),
-      });
+      // return res.render('index.hbs', {
+      //   contents: readDirectoryContents(uploadsPath),
+      // });
+
     });
   }
+
+  const queryParameters = {
+    newRoute: currentRoute
+  }
+  const queryString = new URLSearchParams(queryParameters)
+  return res.redirect(`/?${queryString}`)
 });
 
 app.get('*', (req, res) => {
@@ -186,9 +200,28 @@ app.get('*', (req, res) => {
 //New route parameter is the relative path from uploads/ folder
 //Not just the new folder name but the whole thing
 function handleRoute(newRoute) {
-  activeUploadsPath = path.join(uploadsPath, newRoute);
-  const routesArray = newRoute.slice(0, -1).split('/');
-  return routesArray;
+  const namePathArray = []
+  if (newRoute === "/") return namePathArray
+
+  //trimming "/"
+  if (newRoute.at(0) === "/") newRoute = newRoute.slice(1)
+  if (newRoute.at(newRoute.length - 1) === "/") newRoute = newRoute.slice(0, -1)
+
+  let pathTracker = "/"
+  newRoute.split("/").forEach((el, i) => {
+    pathTracker += `${el}/`
+    namePathArray.push({
+      name: el, path: pathTracker
+    })
+  })
+
+  //Make an array from the newRoute string and return it
+  /* [
+    {name: abs, path: /abs},
+    {name: ccc, path: /abs/ccc},
+  ] */
+
+  return namePathArray;
 }
 
 function readDirectoryContents(path) {
