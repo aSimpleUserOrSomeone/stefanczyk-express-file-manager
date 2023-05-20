@@ -52,6 +52,7 @@ aside {
 	align-items: center;
 	justify-content: space-between;
 }
+
 .form-group > button {
 	flex-basis: 20%;
 }
@@ -70,6 +71,39 @@ input[type='file'] {
 	flex-flow: column nowrap;
 	align-items: stretch;
 	justify-content: flex-start;
+}
+
+.route-name {
+	display: flex;
+	align-items: center;
+	gap: 1.5em;
+}
+
+.route-list {
+	display: flex;
+	gap: 1em;
+	list-style: none;
+}
+
+.route-list li {
+	width: auto;
+	display: flex;
+	flex-wrap: nowrap;
+}
+
+.route-list li form {
+	width: min-content;
+}
+
+.route-list li::before {
+	display: inline-block;
+	color: red;
+	content: '';
+	background-image: url('./arrow-forward.png');
+	background-size: contain;
+	background-repeat: no-repeat;
+	height: 100%;
+	width: 40px;
 }
 
 .content-group {
@@ -133,9 +167,24 @@ button.x.light {
 button.x.light:hover {
 	color: initial;
 }
+
 button.x:not(.light):hover {
 	color: var(--alabaster);
 	text-shadow: 0 0 3px black;
+}
+
+button:not(.x) {
+	background-color: var(--hookers-gray);
+	color: var(--alabaster);
+	border: 2px solid var(--hookers-gray);
+	box-shadow: inset 0 0 4px 0 var(--hookers-gray);
+	border-radius: 0.5em;
+	padding: 0.5em;
+	transition: all 0.2s;
+}
+button:not(.x):hover {
+	background-color: var(--alabaster);
+	color: var(--hookers-gray);
 }
 
 dialog[open] {
@@ -162,4 +211,14 @@ dialog > form {
 
 form > input[type='text'] {
 	padding: 0.25em;
+}
+
+.error-div {
+	display: flex;
+	flex-flow: column nowrap;
+	padding: 1.5rem;
+}
+
+.error-url {
+	margin-bottom: 1em;
 }
