@@ -26,6 +26,7 @@ app.get('/', (req, res) => {
   const routesArray = handleRoute(newRoute);
   const activeUploadsPath = path.join(uploadsPath, newRoute);
   const dirContents = readDirectoryContents(activeUploadsPath)
+  const canRename = newRoute === "/" ? false : true
 
   /*
   Render options are:
@@ -38,11 +39,12 @@ app.get('/', (req, res) => {
     contents: dirContents,
     routesArray: routesArray,
     currentRoute: newRoute,
+    canRename
   });
 });
 
 app.post('/', (req, res) => {
-  const currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload
+  let currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload
 
   if (req.body.reqType === 'folder') {
     var newPath = path.join(uploadsPath, currentRoute, req.body.entityName);
@@ -56,9 +58,6 @@ app.post('/', (req, res) => {
       }
     }
     fs.mkdirSync(newPath);
-    // return res.render('index.hbs', {
-    //   contents: readDirectoryContents(uploadsPath),
-    // });
   } else if (req.body.reqType === 'file') {
     var fileName = req.body.entityName;
     var fileExt = undefined;
@@ -108,6 +107,17 @@ app.post('/', (req, res) => {
     // return res.render('index.hbs', {
     //   contents: readDirectoryContents(uploadsPath),
     // });
+  } else if (req.body.reqType === 'renameFolder') {
+    var oldPath = path.join(uploadsPath, currentRoute);
+    var newPath = path.join(oldPath, "../", req.body.newName)
+
+    if (!fs.existsSync(newPath)) fs.mkdirSync(newPath);
+    let contents = readDirectoryContents(oldPath)
+    renameDirectoryContents(contents, oldPath, newPath)
+    if (fs.existsSync(oldPath)) fse.removeSync(oldPath);
+
+    currentRoute = path.join(currentRoute, "..", req.body.newName) + "/"
+    currentRoute = currentRoute.replaceAll("\\", "/")
   } else {
     let form = formidable({
       multiples: true,
@@ -116,6 +126,7 @@ app.post('/', (req, res) => {
     });
 
     form.parse(req, (err, fields, files) => {
+      currentRoute = fields.newRoute || "/"
       if (files.entities.length > 1) {
         files.entities.forEach((file) => {
           var newPath = path.join(uploadsPath, currentRoute, file.originalFilename);
@@ -123,7 +134,7 @@ app.post('/', (req, res) => {
             0,
             file.originalFilename.lastIndexOf('.')
           );
-          var fileExt = fileName.substring(fileName.lastIndexOf('.') + 1);
+          var fileExt = file.originalFilename.substring(file.originalFilename.lastIndexOf('.') + 1);
           var i = 0;
 
           while (fs.existsSync(newPath)) {
@@ -155,7 +166,7 @@ app.post('/', (req, res) => {
           0,
           files.entities.originalFilename.lastIndexOf('.')
         );
-        var fileExt = fileName.substring(fileName.lastIndexOf('.') + 1);
+        var fileExt = files.entities.originalFilename.substring(files.entities.originalFilename.lastIndexOf('.') + 1);
         var i = 0;
 
         while (fs.existsSync(newPath)) {
@@ -182,20 +193,47 @@ app.post('/', (req, res) => {
       // return res.render('index.hbs', {
       //   contents: readDirectoryContents(uploadsPath),
       // });
-
+      const queryParameters = {
+        newRoute: currentRoute
+      }
+      const queryString = new URLSearchParams(queryParameters)
+      return res.redirect(`/?${queryString}`)
     });
   }
 
-  const queryParameters = {
-    newRoute: currentRoute
+  if (["folder", "file", "remove", "renameFolder"].includes(req.body.reqType)) {
+    const queryParameters = {
+      newRoute: currentRoute
+    }
+    const queryString = new URLSearchParams(queryParameters)
+    return res.redirect(`/?${queryString}`)
   }
-  const queryString = new URLSearchParams(queryParameters)
-  return res.redirect(`/?${queryString}`)
+
 });
 
 app.get('*', (req, res) => {
   res.render('404.hbs', { url: req.url });
 });
+
+function renameDirectoryContents(contents, oldPath, newPath) {
+  if (contents.files)
+    contents.files.forEach(file => {
+      fs.renameSync(path.join(oldPath, file.name + file.ext), path.join(newPath, file.name + file.ext))
+    })
+
+  if (contents.folders)
+    contents.folders.forEach(folder => {
+      const oldFolderPath = path.join(oldPath, folder)
+      const newFolderPath = path.join(newPath, folder)
+      try { fs.mkdirSync(newFolderPath) }
+      catch (err) { console.error(err) }
+      const newFolderContents = readDirectoryContents(oldFolderPath)
+      if (newFolderContents.files.length != 0 || newFolderContents.folders.length != 0) {
+        renameDirectoryContents(newFolderContents, oldFolderPath, newFolderPath)
+      }
+      fse.removeSync(oldFolderPath)
+    })
+}
 
 //New route parameter is the relative path from uploads/ folder
 //Not just the new folder name but the whole thing

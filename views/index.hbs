@@ -1,9 +1,13 @@
 <aside>
 	<button type='button' id='folder' type='submit'>Nowy folder</button>
 	<button type='button' id='file' type='submit'>Nowy plik</button>
+	{{#if canRename}}
+	<button type='button' id='renameFolder' type='submit'>Zmień nazwę</button>
+	{{/if}}
 	<form class='form-group' action="/" method="POST" enctype="multipart/form-data">
 		<input type='file' multiple required name="entities" />
 		<input type="hidden" name="reqType" value="upload">
+		<input type="hidden" name="newRoute" value="{{currentRoute}}">
 		<button id='upload' type='submit'>Ok</button>
 	</form>
 </aside>
@@ -39,7 +43,7 @@
 			</form>
 		</div>
 		{{else}}
-		<p>No folders here...</p>
+		<p>Jeszcze nie ma tu folderów...</p>
 		{{/each}}
 	</div>
 	<div class='content-group'>
@@ -54,7 +58,7 @@
 			<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
 		</div>
 		{{else}}
-			<p>No files here...</p>
+			<p>Jeszcze nie ma tu plików...</p>
 		{{/each}}
 	</div>
 </div>
@@ -67,6 +71,18 @@
 		<div class='form-group'>
 			<button type='submit' name='reqType' value='' id='btnSubmitDialog'>Potwierdź</button>
 			<button type='button' id='btnCloseDialog'>Anuluj</button>
+		</div>
+	</form>
+</dialog>
+<dialog id='renameDialog'>
+	<h2 >Podaj nową nazwę</h2>
+	<form method='POST' id='submitRenameForm'>
+		<input type="hidden" name="newRoute" value="{{currentRoute}}">
+		<input type='text' name='newName' id='inpRenameName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$'
+			required />
+		<div class='form-group'>
+			<button type='submit' name='reqType' value='renameFolder' id='btnSubmitRenameDialog'>Potwierdź</button>
+			<button type='button' id='btnCloseRenameDialog'>Anuluj</button>
 		</div>
 	</form>
 </dialog>
