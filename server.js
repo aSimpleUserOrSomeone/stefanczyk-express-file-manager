@@ -70,7 +70,6 @@ app.get("/editor", (req, res) => {
   const fullPath = path.join(uploadsPath, newRoute)
   const fileName = req.query.fileName
   const textContent = fs.readFileSync(path.join(fullPath, fileName), "utf8")
-  console.log(textContent);
 
   res.render('editor.hbs', {
     currentRoute: newRoute,
@@ -125,8 +124,7 @@ app.post('/', (req, res) => {
       }
     }
 
-    const exts = ["css", "html", "js"]
-    if (exts.includes(fileExt)) {
+    if (fs.existsSync(path.join(`./templates/${fileExt}-template.txt`))) {
       const templateData = fs.readFileSync(`./templates/${fileExt}-template.txt`, 'utf-8')
       fs.writeFileSync(newPath, templateData);
 
