@@ -1,0 +1,31 @@
+<aside>
+    <div class="button-group">
+        <button type='button' id='font-m'>Font -</button>
+        <button type='button' id='colors'>Colors</button>
+        <button type='button' id='font-p'>Font +</button>
+    </div>
+    <button type='button' id='save-settings'>Zapisz ustawienia</button>
+    <button type='button' id='change-name'>Zmiana nazwy</button>
+    <button type='button' id='save-changes'>Zapisz zmiany</button>
+</aside>
+<div class='editor-window'>
+    <p class="editor-title" id="file-name">{{fileName}}</p>
+    <div class="editor-group">
+        <textarea name="editor-line-counter" id="editor-line-counter" readonly wrap="off"></textarea>
+        <textarea name="editor-textarea" id="editor-textarea" wrap="off">{{textContent}}</textarea>
+    </div>
+</div>
+<dialog id='renameDialog'>
+    <h2 id='submitHeading'>Podaj nową nazwę</h2>
+    <form id='submitRenameForm' onsubmit="return validateNewName(this)" action="javascript:void(0)">
+        <input type="hidden" name="newRoute" value="{{currentRoute}}">
+        <input type='text' name='entityName' id='inpName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$'
+            required />
+        <div class='form-group'>
+            <button type='submit' id='btnSubmitDialog'>Potwierdź</button>
+            <button type='button' id='btnCloseRenameDialog'>Anuluj</button>
+        </div>
+    </form>
+</dialog>
+
+<script defer type="text/javascript" src="editorScript.js"></script>

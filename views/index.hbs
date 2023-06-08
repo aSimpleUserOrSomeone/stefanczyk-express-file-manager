@@ -55,10 +55,18 @@
 				<input type="hidden" name="newRoute" value="{{../currentRoute}}">
 				<button class="x" type='submit' name="entityName" value="{{this.name}}{{this.ext}}">X</button>
 			</form>
+			{{#ifTextExt this.ext}}
+			<form action="/editor" method="get">
+				<p><button class="file-name">{{this.name}}</button>{{this.ext}}</p>
+				<input type="hidden" name="fileName" value="{{this.name}}{{this.ext}}">
+				<input type="hidden" name="newRoute" value="{{../currentRoute}}">
+			</form>
+			{{else}}
 			<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
+			{{/ifTextExt}}
 		</div>
 		{{else}}
-			<p>Jeszcze nie ma tu plików...</p>
+		<p>Jeszcze nie ma tu plików...</p>
 		{{/each}}
 	</div>
 </div>
@@ -74,8 +82,10 @@
 		</div>
 	</form>
 </dialog>
+
+{{#if canRename}}
 <dialog id='renameDialog'>
-	<h2 >Podaj nową nazwę</h2>
+	<h2>Podaj nową nazwę</h2>
 	<form method='POST' id='submitRenameForm'>
 		<input type="hidden" name="newRoute" value="{{currentRoute}}">
 		<input type='text' name='newName' id='inpRenameName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$'
@@ -86,5 +96,8 @@
 		</div>
 	</form>
 </dialog>
+
+<script defer type='text/javascript' src="folderEdit.js"></script>
+{{/if}}
 
 <script defer type='text/javascript' src="indexScript.js"></script>

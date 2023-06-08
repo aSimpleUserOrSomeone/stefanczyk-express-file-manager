@@ -5,21 +5,40 @@ const fs = require('fs');
 const fse = require('fs-extra')
 const formidable = require('formidable');
 const { URLSearchParams } = require('url');
+const cors = require("cors")
 
 const app = express();
 const port = 5500;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
-app.engine('hbs', hbs.engine({ defaultLayout: 'main.hbs' }));
+app.engine('hbs', hbs.engine({
+  defaultLayout: 'main.hbs',
+  helpers: {
+    ifTextExt: function (ext, options) {
+      const exts = [".html", ".css", ".json", ".js", ".xml", ".txt"]
+      if (exts.includes(ext)) {
+        return options.fn(this)
+      } else {
+        return options.inverse(this)
+      }
+    }
+  }
+}));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('static'));
+app.use(cors({
+  origin: "*"
+}))
+app.use(express.json())
 
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
+
+fs.writeFileSync("./file-preferences.json", "[]")
 
 app.get('/', (req, res) => {
   const newRoute = req.query.newRoute || '/';
@@ -42,6 +61,24 @@ app.get('/', (req, res) => {
     canRename
   });
 });
+
+app.get("/editor", (req, res) => {
+  const newRoute = req.query.newRoute || '/';
+  // if (newRoute === "/")
+  //   return res.redirect('/')
+
+  const fullPath = path.join(uploadsPath, newRoute)
+  const fileName = req.query.fileName
+  const textContent = fs.readFileSync(path.join(fullPath, fileName), "utf8")
+  console.log(textContent);
+
+  res.render('editor.hbs', {
+    currentRoute: newRoute,
+    fileName,
+    textContent,
+    canRename: false
+  })
+})
 
 app.post('/', (req, res) => {
   let currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload
@@ -88,7 +125,14 @@ app.post('/', (req, res) => {
       }
     }
 
-    fs.writeFileSync(newPath, '');
+    const exts = ["css", "html", "js"]
+    if (exts.includes(fileExt)) {
+      const templateData = fs.readFileSync(`./templates/${fileExt}-template.txt`, 'utf-8')
+      fs.writeFileSync(newPath, templateData);
+
+    } else {
+      fs.writeFileSync(newPath, '');
+    }
     // return res.render('index.hbs', {
     //   contents: readDirectoryContents(uploadsPath),
     // });
@@ -210,6 +254,75 @@ app.post('/', (req, res) => {
   }
 
 });
+
+app.post("/preferences", (req, res) => {
+  const fileName = req.body.fileName || undefined
+
+  if (!fileName)
+    return res.json({ "ERR": "NOFILENAME" })
+
+  const prefBuffer = fs.readFileSync("./file-preferences.json")
+  const prefJSON = JSON.parse(prefBuffer)
+
+  const fontIndex = req.body.fontIndex
+  const colorTheme = req.body.colorTheme
+
+  const [nextPrefBuffer] = prefJSON.filter(el => el.name === fileName)
+  let nextPref = {}
+  if (!nextPrefBuffer) {
+    nextPref = { name: fileName }
+  } else {
+    nextPref = nextPrefBuffer
+  }
+
+
+  if (fontIndex !== undefined)
+    nextPref.fontIndex = fontIndex
+
+  if (colorTheme !== undefined)
+    nextPref.colorTheme = colorTheme
+
+  const nextPrefJSON = [...prefJSON.filter(el => el.name !== fileName), nextPref]
+  fs.writeFileSync("./file-preferences.json", JSON.stringify(nextPrefJSON))
+
+  res.json(nextPref)
+})
+
+app.post("/renameFile", (req, res) => {
+  const filePath = req.body.filePath
+  const oldName = req.body.oldName
+  let newName = req.body.newName
+
+  if (!filePath || !oldName || !newName) {
+    return res.json({ "RES": "WRONGBODY" })
+  }
+
+  if (newName.lastIndexOf(".") === -1) {
+    newName += ".txt"
+  }
+
+  const currentPath = path.join(uploadsPath, filePath)
+
+  fs.renameSync(path.join(currentPath, oldName), path.join(currentPath, newName))
+
+
+  res.json({ "RES": "OK" })
+})
+
+app.post("/editText", (req, res) => {
+  const fileName = req.body.fileName
+  const filePath = req.body.filePath
+  const fileContents = req.body.fileContents
+
+  if (!fileName || !filePath || !fileContents) {
+    return res.json({ "RES": "WRONGBODY" })
+  }
+
+  const currentPath = path.join(uploadsPath, filePath)
+  fs.writeFileSync(path.join(currentPath, fileName), fileContents)
+
+  return res.json({ "RES": "OK" })
+})
 
 app.get('*', (req, res) => {
   res.render('404.hbs', { url: req.url });
