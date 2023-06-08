@@ -1,0 +1,2 @@
+const fun = false
+console.log("Is it fun?", fun)
