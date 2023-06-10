@@ -1,0 +1,25 @@
+<aside>
+    {{#each filters as | filter |}}
+    <div class="photo-filter">
+        <div class="aside-image" id="{{filter}}" style="filter:{{filter}}(100%)"></div>
+        <button type="button">{{filter}}</button>
+    </div>
+    {{/each}}
+</aside>
+<div class='photos-window'>
+    <canvas id="photo-frame"></canvas>
+</div>
+<dialog id='renameDialog'>
+    <h2 id='submitHeading'>Podaj nową nazwę</h2>
+    <form id='submitRenameForm' onsubmit="return validateNewName(this)" action="javascript:void(0)">
+        <input type="hidden" name="newRoute" value="{{currentRoute}}">
+        <input type='text' name='entityName' id='inpName' pattern='^[^<>:&#147\/\\|?*\x00-\x1F]+[^ .\\\/&#147]$'
+            required />
+        <div class='form-group'>
+            <button type='submit' id='btnSubmitDialog'>Potwierdź</button>
+            <button type='button' id='btnCloseRenameDialog'>Anuluj</button>
+        </div>
+    </form>
+</dialog>
+
+<script defer type="text/javascript" src="photosScript.js"></script>

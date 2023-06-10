@@ -22,6 +22,14 @@ app.engine('hbs', hbs.engine({
       } else {
         return options.inverse(this)
       }
+    },
+    ifPhotoExt: function (ext, options) {
+      const exts = [".jpg", ".jpeg", ".png"]
+      if (exts.includes(ext)) {
+        return options.fn(this)
+      } else {
+        return options.inverse(this)
+      }
     }
   }
 }));
@@ -79,6 +87,50 @@ app.get("/editor", (req, res) => {
     canRename: false
   })
 })
+
+app.get("/photos", (req, res) => {
+  const fileName = req.query.fileName
+  const newRoute = req.query.fileName
+  const filters = ["invert", "sepla", "greyscale", "none"]
+
+  res.render("photos.hbs", { filters, currentRoute: newRoute })
+})
+app.post("/getPhoto", (req, res) => {
+  const currentRoute = req.body.currentRoute
+  const fileName = req.body.fileName
+
+  if (!currentRoute || !fileName) {
+    return res.json({ "RES": "WRONGBODY" })
+  }
+
+  const ext = ['.jpg', '.jpeg', '.png']
+  const filepath = path.join(uploadsPath, currentRoute, fileName)
+  if (!ext.includes(path.extname(filepath)))
+    return res.json({ "RES": "CANTREADPHOTO" })
+
+  const fileEncoded = {
+    base64: fs.readFileSync(filepath, "base64"),
+    name: fileName
+  }
+
+  res.json({ file: fileEncoded })
+})
+
+app.post("/photoEdit", (req, res) => {
+  let form = formidable({
+    multiples: false,
+    keepExtensions: true,
+    uploadDir: uploadsPath,
+  });
+
+  form.parse(req, (err, fields, files) => {
+    const newName = fields.newName
+
+
+  })
+})
+
+
 
 app.post('/', (req, res) => {
   let currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload
