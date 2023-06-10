@@ -22,6 +22,7 @@ async function fetchPhoto(photoPath) {
 }
 
 let _imgData = null
+let _ctx = null
 const _image = new Image()
 const _photoPath = document.querySelector("#photo-path").innerHTML
 
@@ -30,12 +31,12 @@ async function loadImage(photoPath) {
     _image.onload = () => {
         photoCanvas.width = _image.naturalWidth
         photoCanvas.height = _image.naturalHeight
-        ctx.drawImage(_image, 0, 0)
+        _ctx.drawImage(_image, 0, 0)
         console.log("Image loaded!");
     }
 
     const photoCanvas = document.querySelector("#photo-frame")
-    let ctx = photoCanvas.getContext("2d")
+    _ctx = photoCanvas.getContext("2d")
 
     _image.src = `data:image;base64, ${_imgData.file.base64}`
     loadFilters()
@@ -55,7 +56,12 @@ function handleFilterButtons() {
     filterButtons.forEach(btn => {
         const btnFilter = btn.innerHTML
         btn.addEventListener('click', () => {
-            console.log(btnFilter);
+            console.log(_ctx);
+            btnFilter === "none" ? _ctx.filter = `${btnFilter}` : _ctx.filter = `${btnFilter}(100%)`
+            _ctx.drawImage(_image, 0, 0)
+
         })
     })
 }
+
+handleFilterButtons()
