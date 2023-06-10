@@ -90,27 +90,27 @@ app.get("/editor", (req, res) => {
 
 app.get("/photos", (req, res) => {
   const fileName = req.query.fileName
-  const newRoute = req.query.fileName
-  const filters = ["invert", "sepla", "greyscale", "none"]
+  const newRoute = req.query.newRoute
+  const filters = ["invert", "sepia", "grayscale", "none"]
 
-  res.render("photos.hbs", { filters, currentRoute: newRoute })
+  res.render("photos.hbs", { filters, currentRoute: newRoute, fileName })
 })
-app.post("/getPhoto", (req, res) => {
-  const currentRoute = req.body.currentRoute
-  const fileName = req.body.fileName
 
-  if (!currentRoute || !fileName) {
+app.post("/getPhoto", (req, res) => {
+  const photoPath = req.body.photoPath
+
+  if (!photoPath) {
+    console.log(req.body);
     return res.json({ "RES": "WRONGBODY" })
   }
 
   const ext = ['.jpg', '.jpeg', '.png']
-  const filepath = path.join(uploadsPath, currentRoute, fileName)
+  const filepath = path.join(uploadsPath, photoPath)
   if (!ext.includes(path.extname(filepath)))
     return res.json({ "RES": "CANTREADPHOTO" })
 
   const fileEncoded = {
     base64: fs.readFileSync(filepath, "base64"),
-    name: fileName
   }
 
   res.json({ file: fileEncoded })

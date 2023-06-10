@@ -1,6 +1,6 @@
-async function fetchPhoto(currentRoute, fileName) {
+async function fetchPhoto(photoPath) {
 
-    const data = { currentRoute, fileName }
+    const data = { photoPath: photoPath }
     const options = {
         method: "POST",
         mode: "cors",
@@ -21,26 +21,41 @@ async function fetchPhoto(currentRoute, fileName) {
     }
 }
 
-const imgData = await fetchPhoto("/", "kot.jpg")
+let _imgData = null
+const _image = new Image()
+const _photoPath = document.querySelector("#photo-path").innerHTML
 
-async function loadImage() {
-    const image = new Image()
-    image.onload = () => {
-        ctx.drawImage(image, 0, 0)
-        console.log("KOK");
+async function loadImage(photoPath) {
+    _imgData = await fetchPhoto(photoPath)
+    _image.onload = () => {
+        photoCanvas.width = _image.naturalWidth
+        photoCanvas.height = _image.naturalHeight
+        ctx.drawImage(_image, 0, 0)
+        console.log("Image loaded!");
     }
 
     const photoCanvas = document.querySelector("#photo-frame")
     let ctx = photoCanvas.getContext("2d")
 
-    image.src = `data:image;base64, ${imgData.file.base64}`
+    _image.src = `data:image;base64, ${_imgData.file.base64}`
+    loadFilters()
 }
 
-loadImage()
+loadImage(_photoPath)
 
-function loadFilter() {
-    const asideImages = document.querySelector(".aside-iamge")
+function loadFilters() {
+    const asideImages = document.querySelectorAll(".aside-image")
     asideImages.forEach(img => {
-        img.style.backgroundImage = `url('')`
+        img.style.backgroundImage = `url('data:image;base64, ${_imgData.file.base64}')`
+    })
+}
+
+function handleFilterButtons() {
+    const filterButtons = document.querySelectorAll(".photo-filter>button")
+    filterButtons.forEach(btn => {
+        const btnFilter = btn.innerHTML
+        btn.addEventListener('click', () => {
+            console.log(btnFilter);
+        })
     })
 }

@@ -1,12 +1,13 @@
 <aside>
     {{#each filters as | filter |}}
     <div class="photo-filter">
-        <div class="aside-image" id="{{filter}}" style="filter:{{filter}}(100%)"></div>
-        <button type="button">{{filter}}</button>
+        <div class="aside-image" id="photo-{{filter}}" style="filter:{{filter}}(100%)"></div>
+        <button id="button-{{filter}}" type="button">{{filter}}</button>
     </div>
     {{/each}}
 </aside>
-<div class='photos-window'>
+<div id='photo-window'>
+    <p id="photo-path">{{currentRoute}}{{fileName}}</p>
     <canvas id="photo-frame"></canvas>
 </div>
 <dialog id='renameDialog'>

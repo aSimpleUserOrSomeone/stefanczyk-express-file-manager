@@ -72,6 +72,40 @@ aside {
 	gap: 1rem;
 }
 
+#photo-window {
+	flex-grow: 1;
+	width: max-content;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: center;
+}
+
+#photo-path {
+	margin: 1em;
+}
+
+#photo-frame {
+	width: 80%;
+	height: auto;
+}
+
+.photo-filter {
+	margin: 0.25em;
+	padding: 0 2rem;
+	display: flex;
+	flex-flow: column nowrap;
+	align-items: center;
+	gap: 1em;
+}
+
+.aside-image {
+	width: 120px;
+	aspect-ratio: 1;
+	background-size: cover;
+	background-position: center;
+	border-radius: 1em;
+}
+
 .button-group {
 	display: flex;
 	flex-flow: row nowrap;
