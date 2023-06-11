@@ -34,12 +34,12 @@ app.engine('hbs', hbs.engine({
   }
 }));
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static('static'));
 app.use(cors({
   origin: "*"
 }))
-app.use(express.json())
+app.use(express.json({ limit: "5mb" }))
 
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
@@ -89,6 +89,7 @@ app.get("/editor", (req, res) => {
 })
 
 app.get("/photos", (req, res) => {
+
   const fileName = req.query.fileName
   const newRoute = req.query.newRoute
   const filters = ["invert", "sepia", "grayscale", "none"]
@@ -109,27 +110,51 @@ app.post("/getPhoto", (req, res) => {
   if (!ext.includes(path.extname(filepath)))
     return res.json({ "RES": "CANTREADPHOTO" })
 
-  const fileEncoded = {
-    base64: fs.readFileSync(filepath, "base64"),
+
+  let fileEncoded = {
+    base64: "",
   }
 
-  res.json({ file: fileEncoded })
+  if (fs.existsSync(filepath)) {
+    fileEncoded = {
+      base64: fs.readFileSync(filepath, "base64"),
+    }
+  }
+
+  return res.json({ file: fileEncoded })
+
 })
 
 app.post("/photoEdit", (req, res) => {
-  let form = formidable({
-    multiples: false,
-    keepExtensions: true,
-    uploadDir: uploadsPath,
-  });
+  const photoPath = req.body.photoPath
+  const dataUrl = req.body.dataUrl
 
-  form.parse(req, (err, fields, files) => {
-    const newName = fields.newName
+  if (!photoPath || !dataUrl) return res.json({ "ERR": "WRONGBODY" })
 
-
-  })
+  const photoBuffer = Buffer.from(dataUrl, 'base64')
+  fs.writeFileSync(path.join(uploadsPath, photoPath), photoBuffer)
+  res.json({ "RES": "OK" })
 })
 
+app.use("/photoRename", (req, res, next) => {
+  const { oldPath, newPath, filePath, fileName } = req.body
+  if (!oldPath || !newPath || !filePath || !fileName) {
+    return res.json({ "ERR": "WRONGBODY" })
+  }
+
+  if (fs.existsSync(path.join(uploadsPath, oldPath))) {
+    fs.renameSync(path.join(uploadsPath, oldPath), path.join(uploadsPath, newPath))
+  } else {
+    return res.json({ "ERR": "NOFILE" })
+  }
+
+  const queryParameters = {
+    fileName, newRoute: filePath
+  }
+  const queryString = new URLSearchParams(queryParameters)
+  res.redirect(`/photos?${queryString}`)
+  next()
+})
 
 
 app.post('/', (req, res) => {
