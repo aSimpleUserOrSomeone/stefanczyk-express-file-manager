@@ -55,6 +55,13 @@
 				<input type="hidden" name="newRoute" value="{{../currentRoute}}">
 				<button class="x" type='submit' name="entityName" value="{{this.name}}{{this.ext}}">X</button>
 			</form>
+			{{#ifPhotoExt this.ext}}
+			<form action="/photos" method="get">
+				<p><button class="file-name">{{this.name}}</button>{{this.ext}}</p>
+				<input type="hidden" name="fileName" value="{{this.name}}{{this.ext}}">
+				<input type="hidden" name="newRoute" value="{{../currentRoute}}">
+			</form>
+			{{else}}
 			{{#ifTextExt this.ext}}
 			<form action="/editor" method="get">
 				<p><button class="file-name">{{this.name}}</button>{{this.ext}}</p>
@@ -64,6 +71,7 @@
 			{{else}}
 			<p><span class="file-name">{{this.name}}</span>{{this.ext}}</p>
 			{{/ifTextExt}}
+			{{/ifPhotoExt}}
 		</div>
 		{{else}}
 		<p>Jeszcze nie ma tu plików...</p>

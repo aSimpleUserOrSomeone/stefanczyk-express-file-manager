@@ -22,16 +22,24 @@ app.engine('hbs', hbs.engine({
       } else {
         return options.inverse(this)
       }
+    },
+    ifPhotoExt: function (ext, options) {
+      const exts = [".jpg", ".jpeg", ".png"]
+      if (exts.includes(ext)) {
+        return options.fn(this)
+      } else {
+        return options.inverse(this)
+      }
     }
   }
 }));
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.static('static'));
 app.use(cors({
   origin: "*"
 }))
-app.use(express.json())
+app.use(express.json({ limit: "5mb" }))
 
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
@@ -78,6 +86,75 @@ app.get("/editor", (req, res) => {
     canRename: false
   })
 })
+
+app.get("/photos", (req, res) => {
+
+  const fileName = req.query.fileName
+  const newRoute = req.query.newRoute
+  const filters = ["invert", "sepia", "grayscale", "none"]
+
+  res.render("photos.hbs", { filters, currentRoute: newRoute, fileName })
+})
+
+app.post("/getPhoto", (req, res) => {
+  const photoPath = req.body.photoPath
+
+  if (!photoPath) {
+    console.log(req.body);
+    return res.json({ "RES": "WRONGBODY" })
+  }
+
+  const ext = ['.jpg', '.jpeg', '.png']
+  const filepath = path.join(uploadsPath, photoPath)
+  if (!ext.includes(path.extname(filepath)))
+    return res.json({ "RES": "CANTREADPHOTO" })
+
+
+  let fileEncoded = {
+    base64: "",
+  }
+
+  if (fs.existsSync(filepath)) {
+    fileEncoded = {
+      base64: fs.readFileSync(filepath, "base64"),
+    }
+  }
+
+  return res.json({ file: fileEncoded })
+
+})
+
+app.post("/photoEdit", (req, res) => {
+  const photoPath = req.body.photoPath
+  const dataUrl = req.body.dataUrl
+
+  if (!photoPath || !dataUrl) return res.json({ "ERR": "WRONGBODY" })
+
+  const photoBuffer = Buffer.from(dataUrl, 'base64')
+  fs.writeFileSync(path.join(uploadsPath, photoPath), photoBuffer)
+  res.json({ "RES": "OK" })
+})
+
+app.use("/photoRename", (req, res, next) => {
+  const { oldPath, newPath, filePath, fileName } = req.body
+  if (!oldPath || !newPath || !filePath || !fileName) {
+    return res.json({ "ERR": "WRONGBODY" })
+  }
+
+  if (fs.existsSync(path.join(uploadsPath, oldPath))) {
+    fs.renameSync(path.join(uploadsPath, oldPath), path.join(uploadsPath, newPath))
+  } else {
+    return res.json({ "ERR": "NOFILE" })
+  }
+
+  const queryParameters = {
+    fileName, newRoute: filePath
+  }
+  const queryString = new URLSearchParams(queryParameters)
+  res.redirect(`/photos?${queryString}`)
+  next()
+})
+
 
 app.post('/', (req, res) => {
   let currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload

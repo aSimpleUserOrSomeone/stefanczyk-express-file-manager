@@ -229,6 +229,7 @@ async function validateNewName(form) {
     }
 
     renameDialog.close()
+    postFilePreferneces(fileName, selectedSizeIndex, selectedThemeName)
     return false
 }
 
