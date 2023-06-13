@@ -2,59 +2,76 @@ const express = require('express');
 const hbs = require('express-handlebars');
 const path = require('path');
 const fs = require('fs');
-const fse = require('fs-extra')
+const fse = require('fs-extra');
 const formidable = require('formidable');
 const { URLSearchParams } = require('url');
-const cors = require("cors")
-const cookieParser = require('cookie-parser')
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const port = 5500;
 
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
-app.engine('hbs', hbs.engine({
-  defaultLayout: 'main.hbs',
-  helpers: {
-    ifTextExt: function (ext, options) {
-      const exts = [".html", ".css", ".json", ".js", ".xml", ".txt"]
-      if (exts.includes(ext)) {
-        return options.fn(this)
-      } else {
-        return options.inverse(this)
-      }
+app.engine(
+  'hbs',
+  hbs.engine({
+    defaultLayout: 'main.hbs',
+    helpers: {
+      ifTextExt: function (ext, options) {
+        const exts = ['.html', '.css', '.json', '.js', '.xml', '.txt'];
+        if (exts.includes(ext)) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
+      },
+      ifPhotoExt: function (ext, options) {
+        const exts = ['.jpg', '.jpeg', '.png'];
+        if (exts.includes(ext)) {
+          return options.fn(this);
+        } else {
+          return options.inverse(this);
+        }
+      },
     },
-    ifPhotoExt: function (ext, options) {
-      const exts = [".jpg", ".jpeg", ".png"]
-      if (exts.includes(ext)) {
-        return options.fn(this)
-      } else {
-        return options.inverse(this)
-      }
-    }
-  }
-}));
+  })
+);
 
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static('static'));
-app.use(cors({
-  origin: "*"
-}))
-app.use(express.json({ limit: "5mb" }))
+app.use(
+  cors({
+    origin: '*',
+  })
+);
+app.use(express.json({ limit: '5mb' }));
+app.use(cookieParser());
 
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
 
-fs.writeFileSync("./file-preferences.json", "[]")
+function isValidUser(username, password) {
+  return true;
+}
 
-app.get('/', (req, res) => {
+fs.writeFileSync('./file-preferences.json', '[]');
+const checkCredentials = (req, res, next) => {
+  const username = req.cookies.username;
+
+  if (isValidUser()) {
+  }
+  next();
+};
+
+app.get('/', checkCredentials, (req, res) => {
   const newRoute = req.query.newRoute || '/';
   const routesArray = handleRoute(newRoute);
   const activeUploadsPath = path.join(uploadsPath, newRoute);
-  const dirContents = readDirectoryContents(activeUploadsPath)
-  const canRename = newRoute === "/" ? false : true
+  const dirContents = readDirectoryContents(activeUploadsPath);
+  const canRename = newRoute === '/' ? false : true;
 
   /*
   Render options are:
@@ -67,98 +84,98 @@ app.get('/', (req, res) => {
     contents: dirContents,
     routesArray: routesArray,
     currentRoute: newRoute,
-    canRename
+    canRename,
   });
 });
 
-app.get("/editor", (req, res) => {
+app.get('/editor', checkCredentials, (req, res) => {
   const newRoute = req.query.newRoute || '/';
   // if (newRoute === "/")
   //   return res.redirect('/')
 
-  const fullPath = path.join(uploadsPath, newRoute)
-  const fileName = req.query.fileName
-  const textContent = fs.readFileSync(path.join(fullPath, fileName), "utf8")
+  const fullPath = path.join(uploadsPath, newRoute);
+  const fileName = req.query.fileName;
+  const textContent = fs.readFileSync(path.join(fullPath, fileName), 'utf8');
 
   res.render('editor.hbs', {
     currentRoute: newRoute,
     fileName,
     textContent,
-    canRename: false
-  })
-})
+    canRename: false,
+  });
+});
 
-app.get("/photos", (req, res) => {
+app.get('/photos', checkCredentials, (req, res) => {
+  const fileName = req.query.fileName;
+  const newRoute = req.query.newRoute;
+  const filters = ['invert', 'sepia', 'grayscale', 'none'];
 
-  const fileName = req.query.fileName
-  const newRoute = req.query.newRoute
-  const filters = ["invert", "sepia", "grayscale", "none"]
+  res.render('photos.hbs', { filters, currentRoute: newRoute, fileName });
+});
 
-  res.render("photos.hbs", { filters, currentRoute: newRoute, fileName })
-})
-
-app.post("/getPhoto", (req, res) => {
-  const photoPath = req.body.photoPath
+app.post('/getPhoto', (req, res) => {
+  const photoPath = req.body.photoPath;
 
   if (!photoPath) {
     console.log(req.body);
-    return res.json({ "RES": "WRONGBODY" })
+    return res.json({ RES: 'WRONGBODY' });
   }
 
-  const ext = ['.jpg', '.jpeg', '.png']
-  const filepath = path.join(uploadsPath, photoPath)
+  const ext = ['.jpg', '.jpeg', '.png'];
+  const filepath = path.join(uploadsPath, photoPath);
   if (!ext.includes(path.extname(filepath)))
-    return res.json({ "RES": "CANTREADPHOTO" })
-
+    return res.json({ RES: 'CANTREADPHOTO' });
 
   let fileEncoded = {
-    base64: "",
-  }
+    base64: '',
+  };
 
   if (fs.existsSync(filepath)) {
     fileEncoded = {
-      base64: fs.readFileSync(filepath, "base64"),
-    }
+      base64: fs.readFileSync(filepath, 'base64'),
+    };
   }
 
-  return res.json({ file: fileEncoded })
+  return res.json({ file: fileEncoded });
+});
 
-})
+app.post('/photoEdit', (req, res) => {
+  const photoPath = req.body.photoPath;
+  const dataUrl = req.body.dataUrl;
 
-app.post("/photoEdit", (req, res) => {
-  const photoPath = req.body.photoPath
-  const dataUrl = req.body.dataUrl
+  if (!photoPath || !dataUrl) return res.json({ ERR: 'WRONGBODY' });
 
-  if (!photoPath || !dataUrl) return res.json({ "ERR": "WRONGBODY" })
+  const photoBuffer = Buffer.from(dataUrl, 'base64');
+  fs.writeFileSync(path.join(uploadsPath, photoPath), photoBuffer);
+  res.json({ RES: 'OK' });
+});
 
-  const photoBuffer = Buffer.from(dataUrl, 'base64')
-  fs.writeFileSync(path.join(uploadsPath, photoPath), photoBuffer)
-  res.json({ "RES": "OK" })
-})
-
-app.use("/photoRename", (req, res, next) => {
-  const { oldPath, newPath, filePath, fileName } = req.body
+app.use('/photoRename', (req, res, next) => {
+  const { oldPath, newPath, filePath, fileName } = req.body;
   if (!oldPath || !newPath || !filePath || !fileName) {
-    return res.json({ "ERR": "WRONGBODY" })
+    return res.json({ ERR: 'WRONGBODY' });
   }
 
   if (fs.existsSync(path.join(uploadsPath, oldPath))) {
-    fs.renameSync(path.join(uploadsPath, oldPath), path.join(uploadsPath, newPath))
+    fs.renameSync(
+      path.join(uploadsPath, oldPath),
+      path.join(uploadsPath, newPath)
+    );
   } else {
-    return res.json({ "ERR": "NOFILE" })
+    return res.json({ ERR: 'NOFILE' });
   }
 
   const queryParameters = {
-    fileName, newRoute: filePath
-  }
-  const queryString = new URLSearchParams(queryParameters)
-  res.redirect(`/photos?${queryString}`)
-  next()
-})
-
+    fileName,
+    newRoute: filePath,
+  };
+  const queryString = new URLSearchParams(queryParameters);
+  res.redirect(`/photos?${queryString}`);
+  next();
+});
 
 app.post('/', (req, res) => {
-  let currentRoute = req.body.newRoute || "/" //used for file/folder creation and upload
+  let currentRoute = req.body.newRoute || '/'; //used for file/folder creation and upload
 
   if (req.body.reqType === 'folder') {
     var newPath = path.join(uploadsPath, currentRoute, req.body.entityName);
@@ -184,28 +201,36 @@ app.post('/', (req, res) => {
       fileExt = 'txt';
     }
 
-    var newPath = path.join(uploadsPath, currentRoute, fileName + '.' + fileExt);
+    var newPath = path.join(
+      uploadsPath,
+      currentRoute,
+      fileName + '.' + fileExt
+    );
     var i = 0;
 
     while (fs.existsSync(newPath)) {
       i += 1;
       if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
         newPath = path.join(
-          uploadsPath, currentRoute,
+          uploadsPath,
+          currentRoute,
           fileName.substring(0, fileName.length - 3) + `(${i})` + '.' + fileExt
         );
       } else {
         newPath = path.join(
-          uploadsPath, currentRoute,
+          uploadsPath,
+          currentRoute,
           fileName + `(${i})` + '.' + fileExt
         );
       }
     }
 
     if (fs.existsSync(path.join(`./templates/${fileExt}-template.txt`))) {
-      const templateData = fs.readFileSync(`./templates/${fileExt}-template.txt`, 'utf-8')
+      const templateData = fs.readFileSync(
+        `./templates/${fileExt}-template.txt`,
+        'utf-8'
+      );
       fs.writeFileSync(newPath, templateData);
-
     } else {
       fs.writeFileSync(newPath, '');
     }
@@ -229,15 +254,15 @@ app.post('/', (req, res) => {
     // });
   } else if (req.body.reqType === 'renameFolder') {
     var oldPath = path.join(uploadsPath, currentRoute);
-    var newPath = path.join(oldPath, "../", req.body.newName)
+    var newPath = path.join(oldPath, '../', req.body.newName);
 
     if (!fs.existsSync(newPath)) fs.mkdirSync(newPath);
-    let contents = readDirectoryContents(oldPath)
-    renameDirectoryContents(contents, oldPath, newPath)
+    let contents = readDirectoryContents(oldPath);
+    renameDirectoryContents(contents, oldPath, newPath);
     if (fs.existsSync(oldPath)) fse.removeSync(oldPath);
 
-    currentRoute = path.join(currentRoute, "..", req.body.newName) + "/"
-    currentRoute = currentRoute.replaceAll("\\", "/")
+    currentRoute = path.join(currentRoute, '..', req.body.newName) + '/';
+    currentRoute = currentRoute.replaceAll('\\', '/');
   } else {
     let form = formidable({
       multiples: true,
@@ -246,30 +271,38 @@ app.post('/', (req, res) => {
     });
 
     form.parse(req, (err, fields, files) => {
-      currentRoute = fields.newRoute || "/"
+      currentRoute = fields.newRoute || '/';
       if (files.entities.length > 1) {
         files.entities.forEach((file) => {
-          var newPath = path.join(uploadsPath, currentRoute, file.originalFilename);
+          var newPath = path.join(
+            uploadsPath,
+            currentRoute,
+            file.originalFilename
+          );
           var fileName = file.originalFilename.substring(
             0,
             file.originalFilename.lastIndexOf('.')
           );
-          var fileExt = file.originalFilename.substring(file.originalFilename.lastIndexOf('.') + 1);
+          var fileExt = file.originalFilename.substring(
+            file.originalFilename.lastIndexOf('.') + 1
+          );
           var i = 0;
 
           while (fs.existsSync(newPath)) {
             i += 1;
             if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
               newPath = path.join(
-                uploadsPath, currentRoute,
+                uploadsPath,
+                currentRoute,
                 fileName.substring(0, fileName.length - 3) +
-                `(${i})` +
-                '.' +
-                fileExt
+                  `(${i})` +
+                  '.' +
+                  fileExt
               );
             } else {
               newPath = path.join(
-                uploadsPath, currentRoute,
+                uploadsPath,
+                currentRoute,
                 fileName + `(${i})` + '.' + fileExt
               );
             }
@@ -279,29 +312,34 @@ app.post('/', (req, res) => {
         });
       } else {
         var newPath = path.join(
-          uploadsPath, currentRoute,
+          uploadsPath,
+          currentRoute,
           files.entities.originalFilename
         );
         var fileName = files.entities.originalFilename.substring(
           0,
           files.entities.originalFilename.lastIndexOf('.')
         );
-        var fileExt = files.entities.originalFilename.substring(files.entities.originalFilename.lastIndexOf('.') + 1);
+        var fileExt = files.entities.originalFilename.substring(
+          files.entities.originalFilename.lastIndexOf('.') + 1
+        );
         var i = 0;
 
         while (fs.existsSync(newPath)) {
           i += 1;
           if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
             newPath = path.join(
-              uploadsPath, currentRoute,
+              uploadsPath,
+              currentRoute,
               fileName.substring(0, fileName.length - 3) +
-              `(${i})` +
-              '.' +
-              fileExt
+                `(${i})` +
+                '.' +
+                fileExt
             );
           } else {
             newPath = path.join(
-              uploadsPath, currentRoute,
+              uploadsPath,
+              currentRoute,
               fileName + `(${i})` + '.' + fileExt
             );
           }
@@ -314,91 +352,91 @@ app.post('/', (req, res) => {
       //   contents: readDirectoryContents(uploadsPath),
       // });
       const queryParameters = {
-        newRoute: currentRoute
-      }
-      const queryString = new URLSearchParams(queryParameters)
-      return res.redirect(`/?${queryString}`)
+        newRoute: currentRoute,
+      };
+      const queryString = new URLSearchParams(queryParameters);
+      return res.redirect(`/?${queryString}`);
     });
   }
 
-  if (["folder", "file", "remove", "renameFolder"].includes(req.body.reqType)) {
+  if (['folder', 'file', 'remove', 'renameFolder'].includes(req.body.reqType)) {
     const queryParameters = {
-      newRoute: currentRoute
-    }
-    const queryString = new URLSearchParams(queryParameters)
-    return res.redirect(`/?${queryString}`)
+      newRoute: currentRoute,
+    };
+    const queryString = new URLSearchParams(queryParameters);
+    return res.redirect(`/?${queryString}`);
   }
-
 });
 
-app.post("/preferences", (req, res) => {
-  const fileName = req.body.fileName || undefined
+app.post('/preferences', (req, res) => {
+  const fileName = req.body.fileName || undefined;
 
-  if (!fileName)
-    return res.json({ "ERR": "NOFILENAME" })
+  if (!fileName) return res.json({ ERR: 'NOFILENAME' });
 
-  const prefBuffer = fs.readFileSync("./file-preferences.json")
-  const prefJSON = JSON.parse(prefBuffer)
+  const prefBuffer = fs.readFileSync('./file-preferences.json');
+  const prefJSON = JSON.parse(prefBuffer);
 
-  const fontIndex = req.body.fontIndex
-  const colorTheme = req.body.colorTheme
+  const fontIndex = req.body.fontIndex;
+  const colorTheme = req.body.colorTheme;
 
-  const [nextPrefBuffer] = prefJSON.filter(el => el.name === fileName)
-  let nextPref = {}
+  const [nextPrefBuffer] = prefJSON.filter((el) => el.name === fileName);
+  let nextPref = {};
   if (!nextPrefBuffer) {
-    nextPref = { name: fileName }
+    nextPref = { name: fileName };
   } else {
-    nextPref = nextPrefBuffer
+    nextPref = nextPrefBuffer;
   }
 
+  if (fontIndex !== undefined) nextPref.fontIndex = fontIndex;
 
-  if (fontIndex !== undefined)
-    nextPref.fontIndex = fontIndex
+  if (colorTheme !== undefined) nextPref.colorTheme = colorTheme;
 
-  if (colorTheme !== undefined)
-    nextPref.colorTheme = colorTheme
+  const nextPrefJSON = [
+    ...prefJSON.filter((el) => el.name !== fileName),
+    nextPref,
+  ];
+  fs.writeFileSync('./file-preferences.json', JSON.stringify(nextPrefJSON));
 
-  const nextPrefJSON = [...prefJSON.filter(el => el.name !== fileName), nextPref]
-  fs.writeFileSync("./file-preferences.json", JSON.stringify(nextPrefJSON))
+  res.json(nextPref);
+});
 
-  res.json(nextPref)
-})
-
-app.post("/renameFile", (req, res) => {
-  const filePath = req.body.filePath
-  const oldName = req.body.oldName
-  let newName = req.body.newName
+app.post('/renameFile', (req, res) => {
+  const filePath = req.body.filePath;
+  const oldName = req.body.oldName;
+  let newName = req.body.newName;
 
   if (!filePath || !oldName || !newName) {
-    return res.json({ "RES": "WRONGBODY" })
+    return res.json({ RES: 'WRONGBODY' });
   }
 
-  if (newName.lastIndexOf(".") === -1) {
-    newName += ".txt"
+  if (newName.lastIndexOf('.') === -1) {
+    newName += '.txt';
   }
 
-  const currentPath = path.join(uploadsPath, filePath)
+  const currentPath = path.join(uploadsPath, filePath);
 
-  fs.renameSync(path.join(currentPath, oldName), path.join(currentPath, newName))
+  fs.renameSync(
+    path.join(currentPath, oldName),
+    path.join(currentPath, newName)
+  );
 
+  res.json({ RES: 'OK' });
+});
 
-  res.json({ "RES": "OK" })
-})
-
-app.post("/editText", (req, res) => {
-  const fileName = req.body.fileName
-  const filePath = req.body.filePath
-  const fileContents = req.body.fileContents
+app.post('/editText', (req, res) => {
+  const fileName = req.body.fileName;
+  const filePath = req.body.filePath;
+  const fileContents = req.body.fileContents;
 
   if (!fileName || !filePath || !fileContents) {
-    return res.json({ "RES": "WRONGBODY" })
+    return res.json({ RES: 'WRONGBODY' });
   }
 
-  const currentPath = path.join(uploadsPath, filePath)
-  fs.writeFileSync(path.join(currentPath, fileName), fileContents)
+  const currentPath = path.join(uploadsPath, filePath);
+  fs.writeFileSync(path.join(currentPath, fileName), fileContents);
 
-  return res.json({ "RES": "OK" })
-})
+  return res.json({ RES: 'OK' });
+});
 
 app.get('*', (req, res) => {
   res.render('404.hbs', { url: req.url });
@@ -406,41 +444,56 @@ app.get('*', (req, res) => {
 
 function renameDirectoryContents(contents, oldPath, newPath) {
   if (contents.files)
-    contents.files.forEach(file => {
-      fs.renameSync(path.join(oldPath, file.name + file.ext), path.join(newPath, file.name + file.ext))
-    })
+    contents.files.forEach((file) => {
+      fs.renameSync(
+        path.join(oldPath, file.name + file.ext),
+        path.join(newPath, file.name + file.ext)
+      );
+    });
 
   if (contents.folders)
-    contents.folders.forEach(folder => {
-      const oldFolderPath = path.join(oldPath, folder)
-      const newFolderPath = path.join(newPath, folder)
-      try { fs.mkdirSync(newFolderPath) }
-      catch (err) { console.error(err) }
-      const newFolderContents = readDirectoryContents(oldFolderPath)
-      if (newFolderContents.files.length != 0 || newFolderContents.folders.length != 0) {
-        renameDirectoryContents(newFolderContents, oldFolderPath, newFolderPath)
+    contents.folders.forEach((folder) => {
+      const oldFolderPath = path.join(oldPath, folder);
+      const newFolderPath = path.join(newPath, folder);
+      try {
+        fs.mkdirSync(newFolderPath);
+      } catch (err) {
+        console.error(err);
       }
-      fse.removeSync(oldFolderPath)
-    })
+      const newFolderContents = readDirectoryContents(oldFolderPath);
+      if (
+        newFolderContents.files.length != 0 ||
+        newFolderContents.folders.length != 0
+      ) {
+        renameDirectoryContents(
+          newFolderContents,
+          oldFolderPath,
+          newFolderPath
+        );
+      }
+      fse.removeSync(oldFolderPath);
+    });
 }
 
 //New route parameter is the relative path from uploads/ folder
 //Not just the new folder name but the whole thing
 function handleRoute(newRoute) {
-  const namePathArray = []
-  if (newRoute === "/") return namePathArray
+  const namePathArray = [];
+  if (newRoute === '/') return namePathArray;
 
   //trimming "/"
-  if (newRoute.at(0) === "/") newRoute = newRoute.slice(1)
-  if (newRoute.at(newRoute.length - 1) === "/") newRoute = newRoute.slice(0, -1)
+  if (newRoute.at(0) === '/') newRoute = newRoute.slice(1);
+  if (newRoute.at(newRoute.length - 1) === '/')
+    newRoute = newRoute.slice(0, -1);
 
-  let pathTracker = "/"
-  newRoute.split("/").forEach((el, i) => {
-    pathTracker += `${el}/`
+  let pathTracker = '/';
+  newRoute.split('/').forEach((el, i) => {
+    pathTracker += `${el}/`;
     namePathArray.push({
-      name: el, path: pathTracker
-    })
-  })
+      name: el,
+      path: pathTracker,
+    });
+  });
 
   //Make an array from the newRoute string and return it
   /* [
