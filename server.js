@@ -6,6 +6,7 @@ const fse = require('fs-extra')
 const formidable = require('formidable');
 const { URLSearchParams } = require('url');
 const cors = require("cors")
+const cookieParser = require('cookie-parser')
 
 const app = express();
 const port = 5500;
