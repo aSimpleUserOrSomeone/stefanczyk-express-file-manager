@@ -83,6 +83,7 @@ main {
 }
 
 aside {
+	position: relative;
 	background-color: var(--ash-grey);
 	width: 300px;
 
@@ -92,6 +93,29 @@ aside {
 	align-items: stretch;
 	padding: 0.5rem;
 	gap: 1rem;
+	overflow: hidden;
+}
+
+#photo-shelf {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	min-height: 720px;
+	position: relative;
+	overflow: visible;
+	transition: left 0.5s, top 0.5s;
+	box-shadow: 0 0 40px 0 black;
+}
+
+#photo-burger {
+	width: 1ch;
+	height: 5ch;
+	position: absolute;
+	top: 50%;
+	left: 100%;
+	transform: translate(-100%, -50%);
 }
 
 @media only screen and (max-width: 560px) {
@@ -100,6 +124,16 @@ aside {
 	}
 	aside {
 		width: auto;
+		height: auto;
+		overflow: hidden;
+	}
+	#photo-burger {
+		width: 5ch;
+		height: 1ch;
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		transform: translate(-50%, -100%);
 	}
 }
 
