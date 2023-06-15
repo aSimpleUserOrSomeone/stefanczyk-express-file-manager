@@ -51,7 +51,7 @@ app.use(cors({ origin: '*' })
 );
 app.use(cookieParser());
 app.use(express.json({ limit: '5mb' }));
-// app.use(nocache())
+app.use(nocache())
 
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
@@ -196,7 +196,7 @@ app.get('/photos', checkCredentials, (req, res) => {
   res.render('photos.hbs', { filters, currentRoute: newRoute, fileName });
 });
 
-app.post('/getPhoto', (req, res) => {
+app.post('/getPhoto', checkCredentials, (req, res) => {
   const photoPath = req.body.photoPath;
 
   if (!photoPath) {
@@ -222,7 +222,7 @@ app.post('/getPhoto', (req, res) => {
   return res.json({ file: fileEncoded });
 });
 
-app.post('/photoEdit', (req, res) => {
+app.post('/photoEdit', checkCredentials, (req, res) => {
   const photoPath = req.body.photoPath;
   const dataUrl = req.body.dataUrl;
 
@@ -257,7 +257,7 @@ app.use('/photoRename', (req, res, next) => {
   next();
 });
 
-app.post('/', (req, res) => {
+app.post('/', checkCredentials, (req, res) => {
   let currentRoute = req.body.newRoute || '/'; //used for file/folder creation and upload
 
   if (req.body.reqType === 'folder') {
@@ -451,7 +451,7 @@ app.post('/', (req, res) => {
   }
 });
 
-app.post('/preferences', (req, res) => {
+app.post('/preferences', checkCredentials, (req, res) => {
   const fileName = req.body.fileName || undefined;
 
   if (!fileName) return res.json({ ERR: 'NOFILENAME' });
@@ -483,7 +483,7 @@ app.post('/preferences', (req, res) => {
   res.json(nextPref);
 });
 
-app.post('/renameFile', (req, res) => {
+app.post('/renameFile', checkCredentials, (req, res) => {
   const filePath = req.body.filePath;
   const oldName = req.body.oldName;
   let newName = req.body.newName;
@@ -506,7 +506,7 @@ app.post('/renameFile', (req, res) => {
   res.json({ RES: 'OK' });
 });
 
-app.post('/editText', (req, res) => {
+app.post('/editText', checkCredentials, (req, res) => {
   const fileName = req.body.fileName;
   const filePath = req.body.filePath;
   const fileContents = req.body.fileContents;
