@@ -58,7 +58,6 @@ if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
 
-
 async function existsUser(username, password) {
   //check with database for existing username
   if (!password) {
@@ -99,14 +98,17 @@ const checkCredentials = async (req, res, next) => {
     return res.render("login.hbs", { isReason: true, reason: "Invalid user data" })
   }
   //user is valid and can access the desired page
+  if (!fs.existsSync(path.join(uploadsPath, cookieUser)))
+    fs.mkdirSync(path.join(uploadsPath, cookieUser))
 
   next();
 };
 
 app.get('/', checkCredentials, (req, res) => {
   const newRoute = req.query.newRoute || '/';
+  const username = req.cookies.username || ""
   const routesArray = handleRoute(newRoute);
-  const activeUploadsPath = path.join(uploadsPath, newRoute);
+  const activeUploadsPath = path.join(uploadsPath, username, newRoute);
   const dirContents = readDirectoryContents(activeUploadsPath);
   const canRename = newRoute === '/' ? false : true;
 
@@ -171,12 +173,14 @@ app.post("/register", async (req, res) => {
   })
 })
 
+
 app.get('/editor', checkCredentials, (req, res) => {
+  const username = req.cookies.username || ""
   const newRoute = req.query.newRoute || '/';
   // if (newRoute === "/")
   //   return res.redirect('/')
 
-  const fullPath = path.join(uploadsPath, newRoute);
+  const fullPath = path.join(uploadsPath, username, newRoute);
   const fileName = req.query.fileName;
   const textContent = fs.readFileSync(path.join(fullPath, fileName), 'utf8');
 
@@ -189,6 +193,7 @@ app.get('/editor', checkCredentials, (req, res) => {
 });
 
 app.get('/photos', checkCredentials, (req, res) => {
+
   const fileName = req.query.fileName;
   const newRoute = req.query.newRoute;
   const filters = ['invert', 'sepia', 'grayscale', 'none'];
@@ -197,6 +202,7 @@ app.get('/photos', checkCredentials, (req, res) => {
 });
 
 app.post('/getPhoto', checkCredentials, (req, res) => {
+  const username = req.cookies.username || ""
   const photoPath = req.body.photoPath;
 
   if (!photoPath) {
@@ -205,7 +211,7 @@ app.post('/getPhoto', checkCredentials, (req, res) => {
   }
 
   const ext = ['.jpg', '.jpeg', '.png'];
-  const filepath = path.join(uploadsPath, photoPath);
+  const filepath = path.join(uploadsPath, username, photoPath);
   if (!ext.includes(path.extname(filepath)))
     return res.json({ RES: 'CANTREADPHOTO' });
 
@@ -223,13 +229,14 @@ app.post('/getPhoto', checkCredentials, (req, res) => {
 });
 
 app.post('/photoEdit', checkCredentials, (req, res) => {
+  const username = req.cookies.username || ""
   const photoPath = req.body.photoPath;
   const dataUrl = req.body.dataUrl;
 
   if (!photoPath || !dataUrl) return res.json({ ERR: 'WRONGBODY' });
 
   const photoBuffer = Buffer.from(dataUrl, 'base64');
-  fs.writeFileSync(path.join(uploadsPath, photoPath), photoBuffer);
+  fs.writeFileSync(path.join(uploadsPath, username, photoPath), photoBuffer);
   res.json({ RES: 'OK' });
 });
 
@@ -239,10 +246,11 @@ app.use('/photoRename', (req, res, next) => {
     return res.json({ ERR: 'WRONGBODY' });
   }
 
-  if (fs.existsSync(path.join(uploadsPath, oldPath))) {
+  const username = req.cookies.username || ""
+  if (fs.existsSync(path.join(uploadsPath, username, oldPath))) {
     fs.renameSync(
-      path.join(uploadsPath, oldPath),
-      path.join(uploadsPath, newPath)
+      path.join(uploadsPath, username, oldPath),
+      path.join(uploadsPath, username, newPath)
     );
   } else {
     return res.json({ ERR: 'NOFILE' });
@@ -259,9 +267,10 @@ app.use('/photoRename', (req, res, next) => {
 
 app.post('/', checkCredentials, (req, res) => {
   let currentRoute = req.body.newRoute || '/'; //used for file/folder creation and upload
+  const username = req.cookies.username || ""
 
   if (req.body.reqType === 'folder') {
-    var newPath = path.join(uploadsPath, currentRoute, req.body.entityName);
+    var newPath = path.join(uploadsPath, username, currentRoute, req.body.entityName);
     var i = 0;
     while (fs.existsSync(newPath)) {
       i += 1;
@@ -286,6 +295,7 @@ app.post('/', checkCredentials, (req, res) => {
 
     var newPath = path.join(
       uploadsPath,
+      username,
       currentRoute,
       fileName + '.' + fileExt
     );
@@ -296,12 +306,14 @@ app.post('/', checkCredentials, (req, res) => {
       if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
         newPath = path.join(
           uploadsPath,
+          username,
           currentRoute,
           fileName.substring(0, fileName.length - 3) + `(${i})` + '.' + fileExt
         );
       } else {
         newPath = path.join(
           uploadsPath,
+          username,
           currentRoute,
           fileName + `(${i})` + '.' + fileExt
         );
@@ -322,7 +334,7 @@ app.post('/', checkCredentials, (req, res) => {
     // });
   } else if (req.body.reqType === 'remove') {
     const fileName = req.body.entityName;
-    const newPath = path.join(uploadsPath, currentRoute, fileName);
+    const newPath = path.join(uploadsPath, username, currentRoute, fileName);
 
     if (fs.existsSync(newPath)) {
       if (fs.lstatSync(newPath).isDirectory()) {
@@ -336,7 +348,7 @@ app.post('/', checkCredentials, (req, res) => {
     //   contents: readDirectoryContents(uploadsPath),
     // });
   } else if (req.body.reqType === 'renameFolder') {
-    var oldPath = path.join(uploadsPath, currentRoute);
+    var oldPath = path.join(uploadsPath, username, currentRoute);
     var newPath = path.join(oldPath, '../', req.body.newName);
 
     if (!fs.existsSync(newPath)) fs.mkdirSync(newPath);
@@ -344,7 +356,7 @@ app.post('/', checkCredentials, (req, res) => {
     renameDirectoryContents(contents, oldPath, newPath);
     if (fs.existsSync(oldPath)) fse.removeSync(oldPath);
 
-    currentRoute = path.join(currentRoute, '..', req.body.newName) + '/';
+    currentRoute = path.join(currentRoute, '../', req.body.newName) + '/';
     currentRoute = currentRoute.replaceAll('\\', '/');
   } else {
     let form = formidable({
@@ -359,6 +371,7 @@ app.post('/', checkCredentials, (req, res) => {
         files.entities.forEach((file) => {
           var newPath = path.join(
             uploadsPath,
+            username,
             currentRoute,
             file.originalFilename
           );
@@ -376,6 +389,7 @@ app.post('/', checkCredentials, (req, res) => {
             if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
               newPath = path.join(
                 uploadsPath,
+                username,
                 currentRoute,
                 fileName.substring(0, fileName.length - 3) +
                 `(${i})` +
@@ -385,6 +399,7 @@ app.post('/', checkCredentials, (req, res) => {
             } else {
               newPath = path.join(
                 uploadsPath,
+                username,
                 currentRoute,
                 fileName + `(${i})` + '.' + fileExt
               );
@@ -396,6 +411,7 @@ app.post('/', checkCredentials, (req, res) => {
       } else {
         var newPath = path.join(
           uploadsPath,
+          username,
           currentRoute,
           files.entities.originalFilename
         );
@@ -413,6 +429,7 @@ app.post('/', checkCredentials, (req, res) => {
           if (fileName.at(-3) == '(' && fileName.at(-1) == ')') {
             newPath = path.join(
               uploadsPath,
+              username,
               currentRoute,
               fileName.substring(0, fileName.length - 3) +
               `(${i})` +
@@ -422,6 +439,7 @@ app.post('/', checkCredentials, (req, res) => {
           } else {
             newPath = path.join(
               uploadsPath,
+              username,
               currentRoute,
               fileName + `(${i})` + '.' + fileExt
             );
@@ -492,11 +510,12 @@ app.post('/renameFile', checkCredentials, (req, res) => {
     return res.json({ RES: 'WRONGBODY' });
   }
 
+  const username = req.cookies.username || ""
   if (newName.lastIndexOf('.') === -1) {
     newName += '.txt';
   }
 
-  const currentPath = path.join(uploadsPath, filePath);
+  const currentPath = path.join(uploadsPath, username, filePath);
 
   fs.renameSync(
     path.join(currentPath, oldName),
@@ -515,7 +534,8 @@ app.post('/editText', checkCredentials, (req, res) => {
     return res.json({ RES: 'WRONGBODY' });
   }
 
-  const currentPath = path.join(uploadsPath, filePath);
+  const username = req.cookies.username || ""
+  const currentPath = path.join(uploadsPath, username, filePath);
   fs.writeFileSync(path.join(currentPath, fileName), fileContents);
 
   return res.json({ RES: 'OK' });
