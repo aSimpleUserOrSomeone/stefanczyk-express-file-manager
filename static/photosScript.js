@@ -138,3 +138,17 @@ async function renamePhoto() {
 
 const renamePhotoBtn = document.querySelector("#rename-photo")
 renamePhotoBtn.addEventListener("click", () => renamePhoto())
+
+const photoBurger = document.querySelector("#photo-burger")
+const photoShelf = document.querySelector("#photo-shelf")
+const initTop = photoShelf.offsetTop
+const hiddenTop = -97
+
+photoBurger.addEventListener("click", e => {
+    console.log(photoShelf.offsetTop);
+    if (photoShelf.offsetTop === initTop) {
+        photoShelf.style.top = hiddenTop + "%"
+    } else {
+        photoShelf.style.top = initTop - 8 + "px"
+    }
+})

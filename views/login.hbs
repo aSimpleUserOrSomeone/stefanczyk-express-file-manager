@@ -1,0 +1,17 @@
+<div class="login-container">
+    <form class="login-form" method="POST" action="/login">
+        <h2 class="login-title">Welcome!</h2>
+        <input type="text" required name="username" id="inp-username" class="login-input" placeholder="Your username here">
+        <input type="text" required name="password" id="inp-password" class="login-input" placeholder="Your password here">
+        <button type="submit">LOG IN</button>
+        {{#if isReason}}
+            <p class="login-reason">{{reason}}</p>
+        {{/if}}
+        
+        <div class="vertical-group">
+            <p>Or register using</p>
+            <a href="/register">REGISTER</a>
+        </div>
+    </form>
+
+</div>
