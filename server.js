@@ -1,13 +1,20 @@
-const express = require('express');
-const hbs = require('express-handlebars');
 const path = require('path');
 const fs = require('fs');
 const fse = require('fs-extra');
-const formidable = require('formidable');
 const { URLSearchParams } = require('url');
+const colors = require('colors')
+
+const express = require('express');
+const hbs = require('express-handlebars');
+const formidable = require('formidable');
 const cors = require('cors');
+const nocache = require("nocache");
 const cookieParser = require('cookie-parser');
 
+const connectDB = require("./mongo")
+const userSchema = require("./schemas/user-schemas")
+
+connectDB()
 const app = express();
 const port = 5500;
 
@@ -40,29 +47,59 @@ app.engine(
 
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static('static'));
-app.use(
-  cors({
-    origin: '*',
-  })
+app.use(cors({ origin: '*' })
 );
-app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
+app.use(express.json({ limit: '5mb' }));
+// app.use(nocache())
 
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath);
 }
 
-function isValidUser(username, password) {
-  return true;
+
+async function existsUser(username, password) {
+  //check with database for existing username
+  if (!password) {
+    const users = await userSchema.find({ username })
+    if (users.length) {
+      return true;
+    }
+    return false
+  }
+  //check with database for correct login data
+  const users = await userSchema.find({ username, password })
+  if (users.length) {
+    return true;
+  }
+  return false
+}
+
+const addUser = async (username, password) => {
+  if (!username || !password) return false
+  try {
+    userSchema.create({ username, password })
+  } catch (err) {
+    console.log(`Error: ${err}`.bgRed);
+  }
 }
 
 fs.writeFileSync('./file-preferences.json', '[]');
-const checkCredentials = (req, res, next) => {
-  const username = req.cookies.username;
 
-  if (isValidUser()) {
+const checkCredentials = async (req, res, next) => {
+  const cookieUser = req.cookies.username;
+  const cookiePass = req.cookies.password;
+  const isValid = await existsUser(cookieUser, cookiePass)
+
+  if (!cookieUser || !cookiePass || !isValid) {
+    //invalid login data, redirect to login page
+    res.clearCookie("username")
+    res.clearCookie("password")
+    return res.render("login.hbs", { isReason: true, reason: "Invalid user data" })
   }
+  //user is valid and can access the desired page
+
   next();
 };
 
@@ -87,6 +124,52 @@ app.get('/', checkCredentials, (req, res) => {
     canRename,
   });
 });
+
+app.get("/login", (req, res) => {
+  res.render("login.hbs")
+})
+app.post("/login", (req, res) => {
+  const formUser = req.body.username
+  const formPass = req.body.password
+
+  const cookieOptions = { expires: new Date(Date.now() + 300000), httpOnly: true, sameSite: "Strict" }
+  existsUser(formUser, formPass).then(isValid => {
+    if (isValid) {
+      res.cookie("username", formUser, cookieOptions)
+      res.cookie("password", formPass, cookieOptions)
+      return res.redirect("/")
+    } else {
+      return res.render('login.hbs', { isReason: true, reason: "Invalid user data" })
+    }
+  })
+})
+
+app.get("/logout", (req, res) => {
+  res.clearCookie("username")
+  res.clearCookie("password")
+
+  res.redirect("/login")
+})
+
+app.get("/register", (req, res) => {
+  res.render("register.hbs")
+})
+app.post("/register", async (req, res) => {
+  const formUser = req.body.username
+  const formPass = req.body.password
+
+  const cookieOptions = { expires: new Date(Date.now() + 300000), httpOnly: true, sameSite: "Strict" }
+  existsUser(formUser).then(isUser => {
+    if (!isUser) {
+      res.cookie("username", formUser, cookieOptions)
+      res.cookie("password", formPass, cookieOptions)
+      addUser(formUser, formPass)
+      return res.redirect("/")
+    } else {
+      return res.render('register.hbs', { isReason: true, reason: "Username already in use" })
+    }
+  })
+})
 
 app.get('/editor', checkCredentials, (req, res) => {
   const newRoute = req.query.newRoute || '/';
@@ -295,9 +378,9 @@ app.post('/', (req, res) => {
                 uploadsPath,
                 currentRoute,
                 fileName.substring(0, fileName.length - 3) +
-                  `(${i})` +
-                  '.' +
-                  fileExt
+                `(${i})` +
+                '.' +
+                fileExt
               );
             } else {
               newPath = path.join(
@@ -332,9 +415,9 @@ app.post('/', (req, res) => {
               uploadsPath,
               currentRoute,
               fileName.substring(0, fileName.length - 3) +
-                `(${i})` +
-                '.' +
-                fileExt
+              `(${i})` +
+              '.' +
+              fileExt
             );
           } else {
             newPath = path.join(
@@ -521,5 +604,5 @@ function readDirectoryContents(path) {
 }
 
 app.listen(port, () => {
-  console.log(`Server listening on localhost:${port}`);
+  console.log(`Server listening on ` + `http://localhost:${port}`.bgBlue);
 });
